@@ -27,9 +27,12 @@ import binascii
 import concurrent.futures
 import logging
 import os
+import tarfile
+import uuid
 
 import idds.common.utils as idds_utils
 import pandaclient.idds_api
+from pandaclient import Client
 from idds.doma.workflowv2.domapandawork import DomaPanDAWork
 from idds.workflowv2.workflow import AndCondition
 from idds.workflowv2.workflow import Workflow as IDDS_client_workflow
@@ -112,6 +115,12 @@ class PanDAService(BaseWmsService):
         _, decoder_prefix = self.config.search(
             "runnerCommand", opt={"replaceEnvVars": False, "expandEnvVars": False}
         )
+
+        if distribution_path == 'pandacache':
+            if len(files) < 3:
+                raise RuntimeError("Archieve file is not created for uploading to pandacache")
+            distribution_path = distribution_path + ":" + files[2]
+
         decoder_prefix = decoder_prefix.replace(
             "_cmd_line_",
             str(cmdline_hex)
@@ -133,9 +142,15 @@ class PanDAService(BaseWmsService):
             A single PanDA iDDS workflow to submit
         """
         idds_client_workflow = IDDS_client_workflow(name=workflow.name)
-        files = self.copy_files_for_distribution(
-            workflow.generated_tasks, self.config["fileDistributionEndPoint"]
-        )
+
+        if self.config["fileDistributionEndPoint"] == 'pandacache':
+            files = self.copy_files_to_pandacache_for_distribution(
+                workflow.generated_tasks, self.config["fileDistributionEndPoint"]
+            )
+        else:
+            files = self.copy_files_for_distribution(
+                workflow.generated_tasks, self.config["fileDistributionEndPoint"]
+            )
         DAG_end_work = []
         DAG_final_work = None
 
@@ -268,6 +283,90 @@ class PanDAService(BaseWmsService):
                 files_plc_hldr[file_placeholder] += "/"
 
         return files_plc_hldr, direct_IO_files
+
+    def create_archive_file(self, local_pfns):
+        """
+        Put all local files into an archive file.
+
+        Parameters
+        ----------
+        local_pfns: dict of files
+            Dictionary of files {'filename': 'file url'}
+
+        Returns
+        -------
+        output_filename: str
+            The output archive file name.
+        """
+        output_filename = 'jobO.%s.tar.gz' % str(uuid.uuid4())
+        submit_path = self.config['bps_defined']['submitPath']
+        output_filename = os.path.join(submit_path, output_filename)
+        _LOG.info("Creating archive file %s", output_filename)
+        with tarfile.open(output_filename, "w:gz", dereference=True) as tar:
+            for local_pfn in local_pfns.values():
+                folder_name = os.path.basename(local_pfn)
+                tar.add(local_pfn, arcname=os.path.basename(folder_name))
+        return output_filename
+
+    def copy_files_to_pandacache(self, filename):
+        status, out = Client.putFile(filename, False)
+        if out.startswith('NewFileName:'):
+            # found the same input sandbox to reuse
+            filename = out.split(':')[-1]
+        elif out != 'True':
+            print(out)
+            raise RuntimeError("Error of uploading file %s to panda cache with %s" % (filename, status))
+        filename = os.path.basename(filename)
+        _LOG.info("Uploaded archive file %s to pandacache" % filename)
+        return filename
+
+    def copy_files_to_pandacache_for_distribution(self, tasks, file_distribution_uri):
+        """
+        Brings locally generated files into pandacache for further
+        utilization them on the edge nodes.
+
+        Parameters
+        ----------
+        local_pfns: `list` of `tasks`
+            Tasks that input files needs to be placed for
+            distribution
+        file_distribution_uri: `str`
+            Path on the edge node accessed storage,
+            including access protocol, bucket name to place files
+
+        Returns
+        -------
+        files_plc_hldr, direct_IO_files, archive_filename :
+            `dict` [`str`, `str`], `set` of `str`, `str`
+            First parameters is key values pairs
+            of file placeholder - file name
+            Second parameter is set of files which will be directly accessed.
+            Third parameter is the archive file name
+        """
+        local_pfns = {}
+        direct_IO_files = set()
+        for task in tasks:
+            for file in task.files_used_by_task:
+                if not file.delivered:
+                    local_pfns[file.name] = file.submission_url
+                    if file.direct_IO:
+                        direct_IO_files.add(file.name)
+
+        archive_filename = self.create_archive_file(local_pfns)
+        archive_filename = self.copy_files_to_pandacache(archive_filename)
+
+        if len(direct_IO_files) == 0:
+            direct_IO_files.add("cmdlineplaceholder")
+
+        files_plc_hldr = {}
+        for file_placeholder, src_path in local_pfns.items():
+            files_plc_hldr[file_placeholder] = os.path.basename(src_path)
+            if os.path.isdir(src_path):
+                # this is needed to make isdir function working
+                # properly in ButlerURL instance on the egde node
+                files_plc_hldr[file_placeholder] += "/"
+
+        return files_plc_hldr, direct_IO_files, archive_filename
 
     def report(self, wms_workflow_id=None, user=None, hist=0, pass_thru=None, is_global=False):
         """Stub for future implementation of the report method
