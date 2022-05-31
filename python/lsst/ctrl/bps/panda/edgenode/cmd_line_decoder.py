@@ -114,6 +114,63 @@ def deliver_input_files_origin(src_path, files, skip_copy):
                 print(f"copied {file_to_copy.path} " f"to {dest.path}", file=sys.stderr)
 
 
+def deliver_input_files_pandacache(src_path, files, skip_copy):
+    """Delivers input files needed for a job
+
+    Parameters
+    ----------
+    src_path : `str`
+        URI for folder where the input files placed
+    files : `str`
+        String with file names separated by the '+' sign
+
+    Returns
+    -------
+    cmdline: `str`
+        Processed command line
+        :param skip_copy:
+    """
+    pos = files.index("+")
+    archive_filename = files[:pos]
+    archive_filename = archive_filename.replace("pandacache:", "")
+    archive_basename = os.path.basename(archive_filename)
+    target_dir = os.getcwd()
+    full_output_filename = os.path.join(target_dir, archive_basename)
+    if "PANDACACHE_URL" not in os.environ and "PANDA_URL_SSL" in os.environ:
+        os.environ["PANDACACHE_URL"] = os.environ["PANDA_URL_SSL"]
+    else:
+        cache_dir = os.path.dirname(archive_filename)
+        os.environ["PANDACACHE_URL"] = os.path.dirname(cache_dir)
+    from pandaclient import Client
+    status, output = Client.getFile(archive_basename, output_path=full_output_filename, verbose=False)
+    print("Download archive file from pandacache status: %s, output: %s" % (status, output))
+    if status != 0:
+        raise RuntimeError("Failed to download archive file from pandacache")
+    with tarfile.open(full_output_filename, 'r:gz') as f:
+        f.extractall(target_dir)
+    os.remove(full_output_filename)
+
+    new_files = files[pos + 1:]
+
+    files = new_files.split("+")
+    dest_uri = ResourcePath(src_path, forceDirectory=True)
+    for file in files:
+        file_name_placeholder, file_pfn = file.split(":")
+        src_base = ResourcePath("", forceAbsolute=True, forceDirectory=True)
+        file_pfn = src_base.join(file_pfn)
+        if file_pfn.isdir():
+            files_to_copy = ResourcePath.findFileResources([file_pfn])
+            dest_dir = dest_uri.join(file_pfn)
+        else:
+            files_to_copy = [file_pfn]
+            dest_dir = dest_uri
+        for file_to_copy in files_to_copy:
+            dest = dest_dir.join(file_to_copy.basename())
+            if not dest.exists():
+                dest.transfer_from(file_to_copy, transfer="copy", overwrite=True)
+                print(f"copied {file_to_copy.path} " f"to {dest.path}", file=sys.stderr)
+
+
 def deliver_input_files(src_path, files, skip_copy):
     """Delivers input files needed for a job
 
@@ -130,47 +187,36 @@ def deliver_input_files(src_path, files, skip_copy):
         Processed command line
         :param skip_copy:
     """
-    if src_path.startswith("pandacache:"):
-        archive_filename = src_path.replace("pandacache:", "")
-        target_dir = os.getcwd()
-        full_output_filename = os.path.join(target_dir, archive_filename)
-        if 'PANDACACHE_URL' not in os.environ:
-            os.environ['PANDACACHE_URL'] = os.environ['PANDA_URL_SSL']
-        from pandaclient import Client
-        status, output = Client.getFile(archive_filename, output_path=full_output_filename, verbose=False)
-        print("Download archive file from pandacache status: %s, output: %s" % (status, output))
-        if status != 0:
-            raise RuntimeError("Failed to download archive file from pandacache")
-        with tarfile.open(full_output_filename, 'r:gz') as f:
-            f.extractall(target_dir)
-        os.remove(full_output_filename)
+    if files.startswith("pandacache:"):
+        deliver_input_files_pandacache(src_path, files, skip_copy)
     else:
         deliver_input_files_origin(src_path, files, skip_copy)
 
 
-def replace_pandacache_var(src_path, cmd_line):
+def replace_pandacache_var(files):
     """Replaces pandacache to remove it.
 
     Parameters
     ----------
-    src_path : `str`
-        URI for folder where the input files placed
-    cmd_line : `str`
-        Command line
+    files : `str`
+        String with file names separated by the '+' sign
 
     Returns
     -------
-    cmdline: `str`
-        Processed command line
+    files: `str`
+        Processed files by removing pandacache
     """
-    if src_path.startswith("pandacache:"):
-        cmd_line = cmd_line.replace("pandacache/", "")
-    return cmd_line
+    if files.startswith("pandacache:"):
+        pos = files.index("+")
+        files = files[pos + 1:]
+
+    return files
 
 
 deliver_input_files(sys.argv[3], sys.argv[4], sys.argv[5])
+sys.argv[4] = replace_pandacache_var(sys.argv[4])
+
 cmd_line = str(binascii.unhexlify(sys.argv[1]).decode())
-cmd_line = replace_pandacache_var(sys.argv[3], cmd_line)
 data_params = sys.argv[2].split("+")
 cmd_line = replace_environment_vars(cmd_line)
 

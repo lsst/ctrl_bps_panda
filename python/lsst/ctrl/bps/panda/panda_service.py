@@ -32,7 +32,6 @@ import uuid
 
 import idds.common.utils as idds_utils
 import pandaclient.idds_api
-from pandaclient import Client
 from idds.doma.workflowv2.domapandawork import DomaPanDAWork
 from idds.workflowv2.workflow import AndCondition
 from idds.workflowv2.workflow import Workflow as IDDS_client_workflow
@@ -91,7 +90,7 @@ class PanDAService(BaseWmsService):
         """
         return binascii.hexlify(cmdline.encode()).decode("utf-8")
 
-    def add_decoder_prefix(self, cmd_line, distribution_path, files):
+    def add_decoder_prefix(self, cmd_line, distribution_path, files, use_pandacache):
         """
         Compose the command line sent to the pilot from the functional part
         (the actual SW running) and the middleware part (containers invocation)
@@ -104,6 +103,8 @@ class PanDAService(BaseWmsService):
             URI of path where all files are located for distribution
         files `list` [`str`]
             File names needed for a task
+        use_pandacache: `bool`
+            Whether to use PanDA cache to distribute qgraph files.
 
         Returns
         -------
@@ -116,10 +117,14 @@ class PanDAService(BaseWmsService):
             "runnerCommand", opt={"replaceEnvVars": False, "expandEnvVars": False}
         )
 
-        if distribution_path == 'pandacache':
+        if use_pandacache:
             if len(files) < 3:
                 raise RuntimeError("Archieve file is not created for uploading to pandacache")
-            distribution_path = distribution_path + ":" + files[2]
+
+            dist_files = "pandacache:" + files[2] + "+"
+            dist_files += "+".join(f"{k}:{v}" for k, v in files[0].items())
+        else:
+            dist_files = "+".join(f"{k}:{v}" for k, v in files[0].items())
 
         decoder_prefix = decoder_prefix.replace(
             "_cmd_line_",
@@ -127,10 +132,11 @@ class PanDAService(BaseWmsService):
             + " ${IN/L} "
             + distribution_path
             + "  "
-            + "+".join(f"{k}:{v}" for k, v in files[0].items())
+            + dist_files
             + " "
             + "+".join(files[1]),
         )
+
         return decoder_prefix
 
     def submit(self, workflow):
@@ -143,7 +149,9 @@ class PanDAService(BaseWmsService):
         """
         idds_client_workflow = IDDS_client_workflow(name=workflow.name)
 
-        if self.config["fileDistributionEndPoint"] == 'pandacache':
+        _, use_pandacache = self.config.search("use_pandacache", opt={"default": False})
+
+        if use_pandacache:
             files = self.copy_files_to_pandacache_for_distribution(
                 workflow.generated_tasks, self.config["fileDistributionEndPoint"]
             )
@@ -157,7 +165,10 @@ class PanDAService(BaseWmsService):
         for idx, task in enumerate(workflow.generated_tasks):
             work = DomaPanDAWork(
                 executable=self.add_decoder_prefix(
-                    task.executable, self.config["fileDistributionEndPoint"], files
+                    task.executable,
+                    self.config["fileDistributionEndPoint"],
+                    files,
+                    use_pandacache
                 ),
                 primary_input_collection={
                     "scope": "pseudo_dataset",
@@ -291,15 +302,33 @@ class PanDAService(BaseWmsService):
         Parameters
         ----------
         local_pfns: dict of files
-            Dictionary of files {'filename': 'file url'}
+            Dictionary of files {"filename": "file url"}
 
         Returns
         -------
         output_filename: str
             The output archive file name.
         """
-        output_filename = 'jobO.%s.tar.gz' % str(uuid.uuid4())
-        submit_path = self.config['bps_defined']['submitPath']
+
+        # start temporary for debug
+        _, executionButlerDir = self.config.search("executionButlerDir")
+        _, butlerConfig = self.config.search("butlerConfig")
+        _, remoteButlerConfig = self.config.search("remoteButlerConfig", opt={"default": None})
+        butler_cfg = os.path.join(executionButlerDir, "butler.yaml")
+        if remoteButlerConfig:
+            butlerConfig = butlerConfig.replace("butler.yaml", "")
+            remoteButlerConfig = remoteButlerConfig.replace("butler.yaml", "")
+            with open(butler_cfg, "r") as butler_file :
+                filedata = butler_file.read()
+
+            filedata = filedata.replace(butlerConfig, remoteButlerConfig)
+
+            with open(butler_cfg, "w") as butler_file:
+                butler_file.write(filedata)
+        # end
+
+        output_filename = "jobO.%s.tar.gz" % str(uuid.uuid4())
+        submit_path = self.config["bps_defined"]["submitPath"]
         output_filename = os.path.join(submit_path, output_filename)
         _LOG.info("Creating archive file %s", output_filename)
         with tarfile.open(output_filename, "w:gz", dereference=True) as tar:
@@ -309,15 +338,24 @@ class PanDAService(BaseWmsService):
         return output_filename
 
     def copy_files_to_pandacache(self, filename):
+        if "PANDACACHE_URL" not in os.environ and "PANDA_URL_SSL" in os.environ:
+            os.environ["PANDACACHE_URL"] = os.environ["PANDA_URL_SSL"]
+        if "PANDACACHE_URL" not in os.environ:
+            raise RuntimeError("PANDACACHE_URL is required")
+        from pandaclient import Client
         status, out = Client.putFile(filename, False)
-        if out.startswith('NewFileName:'):
+        if out.startswith("NewFileName:"):
             # found the same input sandbox to reuse
-            filename = out.split(':')[-1]
-        elif out != 'True':
+            filename = out.split(":")[-1]
+        elif out != "True":
             print(out)
             raise RuntimeError("Error of uploading file %s to panda cache with %s" % (filename, status))
+
         filename = os.path.basename(filename)
+        cache_path = os.path.join(os.environ["PANDACACHE_URL"], 'cache')
+        filename = os.path.join(cache_path, filename)
         _LOG.info("Uploaded archive file %s to pandacache" % filename)
+        raise RuntimeError("stop")
         return filename
 
     def copy_files_to_pandacache_for_distribution(self, tasks, file_distribution_uri):
