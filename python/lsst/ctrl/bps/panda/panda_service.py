@@ -355,7 +355,6 @@ class PanDAService(BaseWmsService):
         cache_path = os.path.join(os.environ["PANDACACHE_URL"], 'cache')
         filename = os.path.join(cache_path, filename)
         _LOG.info("Uploaded archive file %s to pandacache" % filename)
-        raise RuntimeError("stop")
         return filename
 
     def copy_files_to_pandacache_for_distribution(self, tasks, file_distribution_uri):
