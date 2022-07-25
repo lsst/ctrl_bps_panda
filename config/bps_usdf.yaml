@@ -1,0 +1,19 @@
+# This yaml evolves with the progress of the PanDA deployment
+
+includeConfigs:
+- ${CTRL_BPS_PANDA_DIR}/config/bps_panda.yaml
+
+project: dev
+campaign: quick
+computeCloud: US
+computeSite: SLAC
+queue: "SLAC_TEST"
+ 
+# To override the IDF runnerCommand. It can be dropped when a universal runnerCommand is available in bps_panda.yaml
+runnerCommand: 'unset PYTHONPATH; env; source /cvmfs/sw.lsst.eu/linux-x86_64/lsst_distrib/{lsstVersion}/loadLSST.bash;pwd;ls -al;setup lsst_distrib; python3 ${CTRL_BPS_PANDA_DIR}/python/lsst/ctrl/bps/panda/edgenode/cmd_line_decoder.py _cmd_line_;retStat=$?; rm -fr EXEC_REPO-*; exit $retStat'
+ 
+ 
+payload:
+  s3EndpointUrl: "https://storage.googleapis.com"
+  payloadFolder: payload
+  fileDistributionEndPoint: "file:///sdf/group/rubin/sandbox/{operator}/panda_cache_box/{payloadFolder}/{uniqProcName}/"
