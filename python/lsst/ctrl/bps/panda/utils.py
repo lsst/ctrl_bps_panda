@@ -233,16 +233,12 @@ def _make_doma_work(config, generic_workflow, gwjob, task_count, task_chunk):
     )
     _, vo = config.search("vo", opt={"curvals": cvals, "default": PANDA_DEFAULT_VO})
 
-    _, file_distribution_end_point = config.search(
-        "fileDistributionEndPoint", opt={"curvals": cvals, "default": None}
-    )
-
     # Assume input files are same across task
-    local_pfns = {}
-    direct_io_files = set()
+    files_to_stage = {}
+    direct_io_keys = set()
 
     if gwjob.executable.transfer_executable:
-        local_pfns["job_executable"] = gwjob.executable.src_uri
+        files_to_stage["job_executable"] = gwjob.executable.src_uri
         job_executable = f"./{os.path.basename(gwjob.executable.src_uri)}"
     else:
         job_executable = gwjob.executable.src_uri
@@ -251,22 +247,9 @@ def _make_doma_work(config, generic_workflow, gwjob, task_count, task_chunk):
         job_executable + " " + gwjob.arguments, gwjob.cmdvals, gwjob.name
     )
 
-    for gwfile in generic_workflow.get_job_inputs(gwjob.name, transfer_only=True):
-        local_pfns[gwfile.name] = gwfile.src_uri
-        if os.path.isdir(gwfile.src_uri):
-            # this is needed to make isdir function working
-            # properly in ButlerURL instance on the edge node
-            local_pfns[gwfile.name] += "/"
+    file_params, files_to_stage, direct_io_keys = handle_job_inputs(config, generic_workflow, gwjob)
 
-        if gwfile.job_access_remote:
-            direct_io_files.add(gwfile.name)
-
-    if not direct_io_files:
-        direct_io_files.add("cmdlineplaceholder")
-
-    executable = add_decoder_prefix(
-        config, cmd_line, file_distribution_end_point, (local_pfns, direct_io_files)
-    )
+    executable = add_decoder_prefix(config, cmd_line, file_params, direct_io_keys)
     work = DomaPanDAWork(
         executable=executable,
         primary_input_collection={
@@ -302,7 +285,7 @@ def _make_doma_work(config, generic_workflow, gwjob, task_count, task_chunk):
         maxattempt=gwjob.number_of_retries if gwjob.number_of_retries else PANDA_DEFAULT_MAX_ATTEMPTS,
         maxwalltime=gwjob.request_walltime if gwjob.request_walltime else PANDA_DEFAULT_MAX_WALLTIME,
     )
-    return work, local_pfns
+    return work, files_to_stage
 
 
 def add_final_idds_work(
@@ -392,7 +375,7 @@ def convert_exec_string_to_hex(cmdline):
     return binascii.hexlify(cmdline.encode()).decode("utf-8")
 
 
-def add_decoder_prefix(config, cmd_line, distribution_path, files):
+def add_decoder_prefix(config, cmd_line, file_params, direct_io_keys):
     """Compose the command line sent to the pilot from the functional part
     (the actual SW running) and the middleware part (containers invocation)
 
@@ -414,7 +397,7 @@ def add_decoder_prefix(config, cmd_line, distribution_path, files):
     """
     # Manipulate file paths for placement on cmdline
     files_plc_hldr = {}
-    for key, pfn in files[0].items():
+    for key, pfn in file_params.items():
         if pfn.endswith("/"):
             files_plc_hldr[key] = os.path.basename(pfn[:-1])
             isdir = True
@@ -434,11 +417,9 @@ def add_decoder_prefix(config, cmd_line, distribution_path, files):
         "_cmd_line_",
         str(cmdline_hex)
         + " ${IN/L} "
-        + distribution_path
-        + "  "
         + "+".join(f"{k}:{v}" for k, v in files_plc_hldr.items())
         + " "
-        + "+".join(files[1]),
+        + "+".join(direct_io_keys),
     )
     return decoder_prefix
 
@@ -514,3 +495,54 @@ def add_idds_work(config, generic_workflow, idds_workflow):
             work.dependency_map.append({"name": pseudo_filename, "dependencies": deps})
         idds_workflow.add_work(work)
     return files_to_pre_stage, dag_sink_work, task_count
+
+
+def handle_job_inputs(config, generic_workflow, gwjob):
+    """
+    files_to_stage: `dict` [`str`, `str`]
+    file_params : `dict` [`str`, `str`]
+    direct_io_keys : `set` [`str`]
+    """
+
+    _LOG.debug("handle_job_inputs for gwjob %s", gwjob.name)
+    cvals = {"curr_cluster": gwjob.label}
+    _, site = config.search("computeSite", opt={"curvals": cvals, "required": True})
+    cvals["curr_site"] = site
+    _, file_distribution_end_point = config.search(
+        "fileDistributionEndPoint", opt={"curvals": cvals, "default": None}
+    )
+    _, use_shared = config.search("bpsUseShared", opt={"curvals": cvals, "default": None})
+
+    file_params = {}
+    direct_io_keys = set()
+    files_to_stage = {}
+    for gwfile in generic_workflow.get_job_inputs(gwjob.name, data=True, transfer_only=False):
+        if gwfile.wms_transfer:  # PanDA plugin responsible for getting file to job.
+            if use_shared:  # Submit shares filesystem with job.
+                if gwfile.job_shared:  # Job doesn't need own copy.
+                    uri = gwfile.src_uri  # Access file where it is.
+                    direct_io_keys.add(gwfile.name)
+                else:
+                    # Job will need its own copy.
+                    uri = os.path.basename(gwfile.src_uri)
+                    if os.path.isdir(gwfile.src_uri):
+                        # this is needed to make isdir function working
+                        # properly in ButlerURL instance on the edge node
+                        uri += "/"
+            else:  # Need to stage file closer to job
+                src_uri = gwfile.src_uri
+                if os.path.isdir(gwfile.src_uri):
+                    # this is needed to make isdir function working
+                    # properly in ButlerURL instance on the edge node
+                    src_uri += "/"
+                uri = os.path.join(file_distribution_end_point, os.path.basename(src_uri))
+                files_to_stage[src_uri] = uri
+        else:  # If appears on command line, just use where it is.
+            uri = gwfile.src_uri
+            direct_io_keys.add(gwfile.name)
+        file_params[gwfile.name] = uri
+
+    if not direct_io_keys:
+        direct_io_keys.add("cmdlineplaceholder")
+
+    return file_params, files_to_stage, direct_io_keys
