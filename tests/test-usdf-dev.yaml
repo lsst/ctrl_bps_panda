@@ -1,0 +1,46 @@
+# An example bps submission yaml
+# Need to setup USDF before submitting the yaml
+# source setup_panda.sh w_2022_32
+
+LSST_VERSION: w_2022_35
+
+includeConfigs:
+- ${CTRL_BPS_PANDA_DIR}/config/bps_usdf.yaml
+
+pipelineYaml: "${DRP_PIPE_DIR}/pipelines/HSC/DRP-RC2.yaml#isr"
+
+remoteBuild:
+  enabled: True
+  computeCloud: "US"
+  queue: "SLAC_Rubin"
+  requestMemory: 2500
+  files: ["/home/wguan/WORK/ctrl_bps_panda", "/home/wguan/WORK/ctrl_bps"]
+  runnerCommand: >
+    unset PYTHONPATH;
+    export S3_ENDPOINT_URL=https://storage.googleapis.com;
+    export LSST_DB_AUTH=/sdf/home/l/lsstsvc1/.lsst/db-auth.yaml;
+    source /cvmfs/sw.lsst.eu/linux-x86_64/lsst_distrib/w_2022_35/loadLSST.bash;
+    pwd;ls -al;
+    setup lsst_distrib;
+    echo "setup tokens";
+    if [[ ! -z "${PANDA_AUTH_DIR}" ]] && [[ ! -z "${PANDA_AUTH_ORIGIN}" ]]; then export PANDA_AUTH_ID_TOKEN=$(cat $PANDA_AUTH_DIR); export PANDA_AUTH_VO=$PANDA_AUTH_ORIGIN; export IDDS_OIDC_TOKEN=$(cat $PANDA_AUTH_DIR); export IDDS_VO=$PANDA_AUTH_ORIGIN; export PANDA_AUTH=oidc; else unset PANDA_AUTH; export IDDS_AUTH_TYPE=x509_proxy; fi;
+    export PANDA_CONFIG_ROOT=$(pwd); export PANDA_VERIFY_HOST=off;export PANDA_SYS=$CONDA_PREFIX;
+    export PANDA_URL_SSL=${PANDA_SERVER_URL}/server/panda; export PANDACACHE_URL=$PANDA_URL_SSL; export PANDA_URL=$PANDA_URL_SSL;
+    env|grep PANDA;
+    pip install --upgrade panda_client;
+    python3 ${CTRL_BPS_PANDA_DIR}/python/lsst/ctrl/bps/panda/edgenode/download_source.py _download_cmd_line_;
+    wget https://wguan-wisc.web.cern.ch/wguan-wisc/download_source.py;
+    python3 download_source.py _download_cmd_line_;
+    pwd; ls -al;
+    echo "build ctrl_bps";
+    cd ctrl_bps; setup -k -r .; scons; cd ..;
+    echo "build ctrl_bps_panda";
+    cd ctrl_bps_panda; setup -k -r .; scons; cd ..;
+    python3 ${CTRL_BPS_PANDA_DIR}/python/lsst/ctrl/bps/panda/edgenode/build_cmd_line_decoder.py _build_cmd_line_
+
+payload:
+  payloadName: testUSDF
+  inCollection: "HSC/RC2/defaults"
+  dataQuery: "exposure = 34342 AND detector = 10"
+  # fileDistributionEndPoint: "file:///sdf/group/rubin/sandbox/{operator}/panda_cache_box/{payloadFolder}/{uniqProcName}/"
+  fileDistributionEndPoint: "file://${LSST_RUN_TEMP_SPACE}/{operator}/panda_cache_box/{payloadFolder}/{uniqProcName}/"

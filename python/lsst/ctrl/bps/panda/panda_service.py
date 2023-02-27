@@ -39,6 +39,7 @@ from lsst.ctrl.bps.panda.utils import (
     copy_files_for_distribution,
     get_idds_client,
     get_idds_result,
+    create_idds_build_workflow
 )
 from lsst.ctrl.bps.wms_service import BaseWmsService, BaseWmsWorkflow, WmsRunReport, WmsStates
 
@@ -57,28 +58,50 @@ class PanDAService(BaseWmsService):
         workflow.write(out_prefix)
         return workflow
 
-    def submit(self, workflow):
-        _, max_copy_workers = self.config.search(
-            "maxCopyWorkers", opt={"default": PANDA_DEFAULT_MAX_COPY_WORKERS}
-        )
-        # Docstring inherited from BaseWmsService.submit.
-        copy_files_for_distribution(
-            workflow.files_to_pre_stage, self.config["fileDistributionEndPoint"], max_copy_workers
-        )
+    def submit(self, workflow, config=None, remote_build=None, config_file=None):
+        # config is self.config, so the config=None can be removed.
+        if config and remote_build:
+            _LOG.info("remote build")
+            _LOG.info(config_file)
+            _LOG.info(config)
 
-        idds_client = get_idds_client(self.config)
-        ret = idds_client.submit(workflow.idds_client_workflow, username=None, use_dataset_name=False)
-        _LOG.debug("iDDS client manager submit returned = %s", ret)
+            idds_build_workflow = create_idds_build_workflow(config_file, config, remote_build)
+            idds_client = get_idds_client(self.config)
+            ret = idds_client.submit_build(idds_build_workflow, username=None, use_dataset_name=False)
+            _LOG.debug("iDDS client manager submit returned = %s", ret)
 
-        # Check submission success
-        status, result, error = get_idds_result(ret)
-        if status:
-            request_id = int(result)
+            # Check submission success
+            status, result, error = get_idds_result(ret)
+            if status:
+                request_id = int(result)
+            else:
+                raise RuntimeError(f"Error submitting to PanDA service: {error}")
+
+            _LOG.info("Submitted into iDDs with request id=%s", request_id)
+            idds_build_workflow.run_id = request_id
+            return idds_build_workflow
         else:
-            raise RuntimeError(f"Error submitting to PanDA service: {error}")
+            _, max_copy_workers = self.config.search(
+                "maxCopyWorkers", opt={"default": PANDA_DEFAULT_MAX_COPY_WORKERS}
+            )
+            # Docstring inherited from BaseWmsService.submit.
+            copy_files_for_distribution(
+                workflow.files_to_pre_stage, self.config["fileDistributionEndPoint"], max_copy_workers
+            )
 
-        _LOG.info("Submitted into iDDs with request id=%s", request_id)
-        workflow.run_id = request_id
+            idds_client = get_idds_client(self.config)
+            ret = idds_client.submit(workflow.idds_client_workflow, username=None, use_dataset_name=False)
+            _LOG.debug("iDDS client manager submit returned = %s", ret)
+
+            # Check submission success
+            status, result, error = get_idds_result(ret)
+            if status:
+                request_id = int(result)
+            else:
+                raise RuntimeError(f"Error submitting to PanDA service: {error}")
+
+            _LOG.info("Submitted into iDDs with request id=%s", request_id)
+            workflow.run_id = request_id
 
     def restart(self, wms_workflow_id):
         # Docstring inherited from BaseWmsService.restart.
