@@ -27,10 +27,10 @@ dependencies = [
     "idds-doma",
     "idds-workflow",
     "panda-client",
-    "lsst-ctrl-bps",
-    "lsst-daf-butler",
-    "lsst-resources",
-    "lsst-utils"
+    "lsst-ctrl-bps >=25.0,<25.100",
+    "lsst-daf-butler >=25.0,<25.100",
+    "lsst-resources >=25.0,<25.100",
+    "lsst-utils >=25.0,<25.100"
 ]
 
 dynamic = ["version"]
