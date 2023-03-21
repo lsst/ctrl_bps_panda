@@ -529,3 +529,29 @@ def add_idds_work(config, generic_workflow, idds_workflow):
                 )
             work.dependency_map.append({"name": pseudo_filename, "dependencies": deps})
     return files_to_pre_stage, dag_sink_work, task_count
+
+
+def get_tasks(request_id, config=None):
+    idds_client = get_idds_client(config)
+    ret = idds_client.get_requests(request_id=request_id, with_detail=True)
+    _LOG.debug("Ping PanDA service returned = %s", ret)
+
+    # TODO:
+    # idds result will be switched to use new result format
+    ret_code, ret_result = ret
+    tasks = []
+    if ret_code == 0:
+        status, result = ret_result
+        for task in result:
+            tasks.append(task['transform_workload_id'])
+    return tasks
+
+
+def get_task_detail(request_id, workload_id, config=None):
+    idds_client = get_idds_client(config)
+    ret = idds_client.get_contents_output_ext(request_id=request_id, workload_id=workload_id)
+    _LOG.debug("Ping PanDA service returned = %s", ret)
+
+    # TODO:
+    # idds result will be switched to use new result format
+    return ret

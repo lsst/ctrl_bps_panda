@@ -1,0 +1,6 @@
+brokers: ["atlas-mb.cern.ch:61013"]
+destination: "/topic/doma.idds.ext"
+username: "domaiddsext"
+password: "AskForIt"
+broker_timeout: 360
+
