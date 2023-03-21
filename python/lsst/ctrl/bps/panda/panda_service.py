@@ -263,7 +263,6 @@ class PanDAService(BaseWmsService):
         copy_executor = concurrent.futures.ThreadPoolExecutor(max_workers=10)
         future_file_copy = []
         for src, trgt in files_to_copy.items():
-
             # S3 clients explicitly instantiate here to overpass this
             # https://stackoverflow.com/questions/52820971/is-boto3-client-thread-safe
             trgt.exists()
