@@ -1,3 +1,13 @@
+lsst-ctrl-bps-panda v24.1.0 (2023-04-27)
+========================================
+
+Other Changes and Additions
+---------------------------
+
+* Updated ``ctrl_bps_panda/config/bps_usdf.yaml`` to allow for local custom setup. (`DM-38142 <https://jira.lsstcorp.org/browse/DM-38142>`_)
+* Updated some default YAML values to more easily allow parts to be modified as well as provide values to go with the updated bps default yaml (e.g., no longer need ``runQuantumCommands``). (`DM-38307 <https://jira.lsstcorp.org/browse/DM-38307>`_)
+
+
 lsst-ctrl-bps-panda v24.0.0 (2022-08-29)
 ========================================
 
