@@ -1,3 +1,34 @@
+lsst-ctrl-bps-panda v26.0.0 (2023-09-25)
+========================================
+
+New Features
+------------
+
+- Enabled saving of iDDS client workflow objects at prepare bps submission stage. (`DM-34915 <https://jira.lsstcorp.org/browse/DM-34915>`_)
+- Updated BPS PanDA plugin to work with quantum-backed butler. (`DM-39553 <https://jira.lsstcorp.org/browse/DM-39553>`_)
+
+
+Bug Fixes
+---------
+
+- Fixed the execution butler transfer bug when period in run collection. (`DM-37843 <https://jira.lsstcorp.org/browse/DM-37843>`_)
+- Fixed PanDA task chunking bug that caused assertion error during submission for really large QuantumGraphs. (`DM-38101 <https://jira.lsstcorp.org/browse/DM-38101>`_)
+- Handled dependency issues when preparing rescue workflows. (`DM-38377 <https://jira.lsstcorp.org/browse/DM-38377>`_)
+
+
+Other Changes and Additions
+---------------------------
+
+- Now print out pseudo_file_name in the bps PanDA plugin to simplify debugging if there is a problem with it being too long. (`DM-37352 <https://jira.lsstcorp.org/browse/DM-37352>`_)
+- Included butler repo URL in log message labels. (`DM-37961 <https://jira.lsstcorp.org/browse/DM-37961>`_)
+- Modified PanDA task chunking to be evenly divided. (`DM-38101 <https://jira.lsstcorp.org/browse/DM-38101>`_)
+- Updated ``ctrl_bps_panda/config/bps_usdf.yaml`` to allow for local custom setup (`DM-38142 <https://jira.lsstcorp.org/browse/DM-38142>`_)
+- Updated some default YAML values to more easily allow parts to be
+  modified as well as provided values to go with the updated bps
+  default YAML (e.g., no longer need ``runQuantumCommands``). (`DM-38307 <https://jira.lsstcorp.org/browse/DM-38307>`_)
+- Moved ``fileDistributionEndPoint`` from lustre to weka in USDF configuration. (`DM-39334 <https://jira.lsstcorp.org/browse/DM-39334>`_)
+
+
 lsst-ctrl-bps-panda v25.0.0 (2023-03-02)
 ========================================
 
