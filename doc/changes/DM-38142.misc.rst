@@ -1,1 +1,0 @@
-Update ctrl_bps_panda/config/bps_usdf.yaml to allow for local custom setup
