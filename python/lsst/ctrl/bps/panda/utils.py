@@ -247,6 +247,11 @@ def _make_doma_work(config, generic_workflow, gwjob, task_count, task_chunk):
     _, file_distribution_end_point_default = config.search(
         "fileDistributionEndPointDefault", opt={"curvals": cvals, "default": None}
     )
+    task_rss_retry_step = (
+        gwjob.request_memory * gwjob.memory_multiplier
+        if gwjob.request_memory and gwjob.memory_multiplier
+        else 0
+    )
 
     # Assume input files are same across task
     local_pfns = {}
@@ -315,6 +320,9 @@ def _make_doma_work(config, generic_workflow, gwjob, task_count, task_chunk):
         },
         encode_command_line=True,
         task_rss=gwjob.request_memory if gwjob.request_memory else PANDA_DEFAULT_RSS,
+        task_rss_retry_offset=0,
+        task_rss_retry_step=task_rss_retry_step,
+        task_rss_max=gwjob.request_memory_max if gwjob.request_memory_max else None,
         task_cloud=gwjob.compute_cloud if gwjob.compute_cloud else PANDA_DEFAULT_CLOUD,
         task_site=site,
         task_priority=int(gwjob.priority) if gwjob.priority else PANDA_DEFAULT_PRIORITY,
