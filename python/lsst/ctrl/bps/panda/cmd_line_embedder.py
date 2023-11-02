@@ -29,8 +29,6 @@ import logging
 import os
 import re
 
-from lsst.ctrl.bps.panda.constants import PANDA_MAX_LEN_INPUT_FILE
-
 _LOG = logging.getLogger(__name__)
 
 
@@ -190,11 +188,5 @@ class CommandLineEmbedder:
         if gwfiles:
             cmd_line = self.replace_static_files(cmd_line, gwfiles)
         file_name = job_name + self.attach_pseudo_file_params(actual_lazy_vars)
-
-        if len(file_name) > PANDA_MAX_LEN_INPUT_FILE:
-            _LOG.error(f"Too long pseudo input filename: {file_name}")
-            raise RuntimeError(
-                f"job pseudo input file name contains more than {PANDA_MAX_LEN_INPUT_FILE} symbols. Aborting."
-            )
 
         return cmd_line, file_name
