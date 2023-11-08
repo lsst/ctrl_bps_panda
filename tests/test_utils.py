@@ -30,28 +30,17 @@
 import unittest
 
 from lsst.ctrl.bps import GenericWorkflowExec, GenericWorkflowJob
-from lsst.ctrl.bps.panda.constants import PANDA_MAX_LEN_INPUT_FILE
 from lsst.ctrl.bps.panda.utils import _make_pseudo_filename
 
 
 class TestPandaUtils(unittest.TestCase):
     """Simple test of utilities."""
 
-    def testTooLongPseudoFilename(self):
-        # define enough of a job for this test
-        myexec = GenericWorkflowExec("test_exec")
-        myexec.src_uri = "/dummy/path/test_exec"
-        gwjob = GenericWorkflowJob("j" * PANDA_MAX_LEN_INPUT_FILE)
-        gwjob.executable = myexec
-        gwjob.arguments = ""
-        with self.assertRaises(RuntimeError):
-            _ = _make_pseudo_filename({}, gwjob)
-
     def testOKPseudoFilename(self):
         # define enough of a job for this test
         myexec = GenericWorkflowExec("test_exec")
         myexec.src_uri = "/dummy/path/test_exec"
-        gwjob = GenericWorkflowJob("j" * 15)
+        gwjob = GenericWorkflowJob("j" * 4005)
         gwjob.executable = myexec
         gwjob.arguments = ""
         name = _make_pseudo_filename({}, gwjob)
