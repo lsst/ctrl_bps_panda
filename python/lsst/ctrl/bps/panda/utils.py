@@ -56,6 +56,7 @@ from lsst.ctrl.bps.panda.constants import (
     PANDA_DEFAULT_PROCESSING_TYPE,
     PANDA_DEFAULT_PROD_SOURCE_LABEL,
     PANDA_DEFAULT_RSS,
+    PANDA_DEFAULT_RSS_MAX,
     PANDA_DEFAULT_TASK_TYPE,
     PANDA_DEFAULT_VO,
 )
@@ -248,6 +249,10 @@ def _make_doma_work(config, generic_workflow, gwjob, task_count, task_chunk):
         "fileDistributionEndPointDefault", opt={"curvals": cvals, "default": None}
     )
 
+    task_rss = gwjob.request_memory if gwjob.request_memory else PANDA_DEFAULT_RSS
+    task_rss_retry_step = task_rss * gwjob.memory_multiplier if gwjob.memory_mulitplier else 0
+    task_rss_retry_offset = 0 if task_rss_retry_step else task_rss
+
     # Assume input files are same across task
     local_pfns = {}
     direct_io_files = set()
@@ -314,7 +319,10 @@ def _make_doma_work(config, generic_workflow, gwjob, task_count, task_chunk):
             "type": "template",
         },
         encode_command_line=True,
-        task_rss=gwjob.request_memory if gwjob.request_memory else PANDA_DEFAULT_RSS,
+        task_rss=task_rss,
+        task_rss_retry_offset=task_rss_retry_offset,
+        task_rss_retry_step=task_rss_retry_step,
+        task_rss_max=gwjob.request_memory_max if gwjob.request_memory_max else PANDA_DEFAULT_RSS_MAX,
         task_cloud=gwjob.compute_cloud if gwjob.compute_cloud else PANDA_DEFAULT_CLOUD,
         task_site=site,
         task_priority=int(gwjob.priority) if gwjob.priority else PANDA_DEFAULT_PRIORITY,
