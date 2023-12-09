@@ -655,6 +655,8 @@ def create_idds_build_workflow(**kwargs):
     config = kwargs["config"] if "config" in kwargs else None
     remote_build = kwargs["remote_build"] if "remote_build" in kwargs else None
     config_file = kwargs["config_file"] if "config_file" in kwargs else None
+    if config_file:
+        config_file = os.path.basename(config_file)
     compute_site = kwargs["compute_site"] if "compute_site" in kwargs else None
     _, files = remote_build.search("files", opt={"default": []})
     submit_path = config["submitPath"]
