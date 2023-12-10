@@ -655,8 +655,7 @@ def create_idds_build_workflow(**kwargs):
     config = kwargs["config"] if "config" in kwargs else None
     remote_build = kwargs["remote_build"] if "remote_build" in kwargs else None
     config_file = kwargs["config_file"] if "config_file" in kwargs else None
-    if config_file:
-        config_file = os.path.basename(config_file)
+    config_file_base = os.path.basename(config_file) if config_file else None
     compute_site = kwargs["compute_site"] if "compute_site" in kwargs else None
     _, files = remote_build.search("files", opt={"default": []})
     submit_path = config["submitPath"]
@@ -674,7 +673,7 @@ def create_idds_build_workflow(**kwargs):
     search_opt["curvals"] = cvals
     _, executable = remote_build.search("runnerCommand", opt=search_opt)
     executable = executable.replace("_download_cmd_line_", remote_filename)
-    executable = executable.replace("_build_cmd_line_", config_file)
+    executable = executable.replace("_build_cmd_line_", config_file_base)
     executable = executable.replace("_compute_site_", compute_site or "")
 
     task_cloud = get_task_parameter(config, remote_build, "computeCloud")
@@ -684,6 +683,7 @@ def create_idds_build_workflow(**kwargs):
     nretries = get_task_parameter(config, remote_build, "numberOfRetries")
     _LOG.info("requestMemory: %s", task_rss)
     _LOG.info("Site: %s", task_site)
+    # _LOG.info("executable: %s", executable)
     # TODO: fill other parameters based on config
     build_work = DomaPanDAWork(
         executable=executable,
