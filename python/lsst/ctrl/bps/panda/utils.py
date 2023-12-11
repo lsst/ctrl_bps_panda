@@ -250,7 +250,7 @@ def _make_doma_work(config, generic_workflow, gwjob, task_count, task_chunk):
     )
 
     task_rss = gwjob.request_memory if gwjob.request_memory else PANDA_DEFAULT_RSS
-    task_rss_retry_step = task_rss * gwjob.memory_multiplier if gwjob.memory_mulitplier else 0
+    task_rss_retry_step = task_rss * gwjob.memory_multiplier if gwjob.memory_multiplier else 0
     task_rss_retry_offset = 0 if task_rss_retry_step else task_rss
 
     # Assume input files are same across task
