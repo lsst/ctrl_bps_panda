@@ -102,7 +102,15 @@ class PanDAService(BaseWmsService):
 
         return None, None, f"Error retry PanDA workflow: {str(error)}"
 
-    def report(self, wms_workflow_id=None, user=None, hist=0, pass_thru=None, is_global=False):
+    def report(
+        self,
+        wms_workflow_id=None,
+        user=None,
+        hist=0,
+        pass_thru=None,
+        is_global=False,
+        return_exit_codes=False,
+    ):
         # Docstring inherited from BaseWmsService.report.
         message = ""
         run_reports = []
@@ -136,6 +144,7 @@ class PanDAService(BaseWmsService):
                 job_state_counts={state: 0 for state in WmsStates},
                 job_summary={},
                 run_summary="",
+                exit_code_summary=[],
             )
 
             # The status of a task is taken from the first item of state_map.
@@ -177,14 +186,44 @@ class PanDAService(BaseWmsService):
 
             tasks.sort(key=lambda x: x["transform_workload_id"])
 
+            exit_codes_all = {}
             # Loop over all tasks data returned by idds_client
             for task in tasks:
+                exit_codes = []
                 totaljobs = task["output_total_files"]
                 wms_report.total_number_jobs += totaljobs
                 tasklabel = task["transform_name"]
                 tasklabel = re.sub(wms_report.run + "_", "", tasklabel)
                 status = task["transform_status"]["attributes"]["_name_"]
                 taskstatus = {}
+                # if the state is failed, gather exit code information
+                if status in ["SubFinished", "Failed"]:
+                    transform_workload_id = task["transform_workload_id"]
+                    new_ret = idds_client.get_contents_output_ext(
+                        request_id=wms_workflow_id, workload_id=transform_workload_id
+                    )
+                    request_status = new_ret[0]
+                    if request_status != 0:
+                        raise RuntimeError(
+                            f"Error to get workflow status: {new_ret} for id: {wms_workflow_id}"
+                        )
+                    # task_info is a dictionary of len 1 that contains a list
+                    # of dicts containing panda job info
+                    task_info = new_ret[1][1]
+
+                    if len(task_info) == 1:
+                        wmskey = list(task_info.keys())[0]
+                        wmsjobs = task_info[wmskey]
+                    else:
+                        raise RuntimeError(
+                            f"Unexpected job return from PanDA: {task_info} for id: {transform_workload_id}"
+                        )
+                    exit_codes = [
+                        wmsjob["trans_exit_code"]
+                        for wmsjob in wmsjobs
+                        if wmsjob["trans_exit_code"] is not None and int(wmsjob["trans_exit_code"]) != 0
+                    ]
+                    exit_codes_all[tasklabel] = exit_codes
                 # Fill number of jobs in all WmsStates
                 for state in WmsStates:
                     njobs = 0
@@ -212,7 +251,7 @@ class PanDAService(BaseWmsService):
             # All tasks have failed, set the workflow FAILED
             if not wf_succeed:
                 wms_report.state = WmsStates.FAILED
-
+            wms_report.exit_code_summary = exit_codes_all
             run_reports.append(wms_report)
 
         return run_reports, message
