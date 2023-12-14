@@ -57,8 +57,8 @@ def panda_auth_clean():
 def panda_auth_expiration():
     """Get number of seconds until token expires.
 
-    Return
-    ------
+    Returns
+    -------
     expiration : `int`
         Number of seconds until token expires.
     """
@@ -72,8 +72,8 @@ def panda_auth_expiration():
 def panda_auth_setup():
     """Initialize auth object used by various auth functions.
 
-    Return
-    ------
+    Returns
+    -------
     open_id : `pandaclient.openidc_utils.OpenIdConnect_Utils`
         Auth object which can interact with auth token.
     """
@@ -101,8 +101,8 @@ def panda_auth_setup():
 def panda_auth_status():
     """Gather information about a token if it exists.
 
-    Return
-    ------
+    Returns
+    -------
     status : `dict`
         Status information about a token if it exists.
         Includes filename and expiration epoch.

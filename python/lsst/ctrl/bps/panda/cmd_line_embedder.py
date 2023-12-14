@@ -58,7 +58,7 @@ class CommandLineEmbedder:
 
         Parameters
         ----------
-        cmd_line:  `str`
+        cmd_line : `str`
             Command line to be processed.
         lazy_vars : `dict`
             Lazy variables and its values.
@@ -80,9 +80,9 @@ class CommandLineEmbedder:
 
         Parameters
         ----------
-        cmd_line: `str`
+        cmd_line : `str`
             command line to be processed
-        files: `list` [`lsst.ctrl.bps.GenericWorkflowFile`]
+        files : `list` [`lsst.ctrl.bps.GenericWorkflowFile`]
             input and output files for the job.
 
         Returns
@@ -157,13 +157,13 @@ class CommandLineEmbedder:
 
         Parameters
         ----------
-        cmd_line: `str`
+        cmd_line : `str`
             Command line containing all lazy placeholders.
-        lazy_vars: `dict` [ `str`, `str` ]
+        lazy_vars : `dict` [ `str`, `str` ]
             Lazy parameter name/values.
-        job_name: `str`
+        job_name : `str`
             Job name proposed by BPS.
-        gwfiles: `list` [`lsst.ctrl.bps.GenericWorkflowFile`]
+        gwfiles : `list` [`lsst.ctrl.bps.GenericWorkflowFile`]
             Job files.
 
         Returns

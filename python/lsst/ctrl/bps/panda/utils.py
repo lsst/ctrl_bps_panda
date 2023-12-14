@@ -71,9 +71,9 @@ def copy_files_for_distribution(files_to_stage, file_distribution_uri, max_copy_
 
     Parameters
     ----------
-    local_pfns : `dict` [`str`, `str`]
+    files_to_stage : `dict` [`str`, `str`]
         Files which need to be copied to a workflow staging area.
-    file_distribution_uri: `str`
+    file_distribution_uri : `str`
         Path on the edge node accessed storage,
         including access protocol, bucket name to place files.
     max_copy_workers : `int`
@@ -146,7 +146,7 @@ def get_idds_result(ret):
 
     Parameters
     ----------
-    ret: `tuple` of (`int`, (`bool`, payload)).
+    ret : `tuple` of (`int`, (`bool`, payload)).
         The first part ret[0] is the status of PanDA relay service.
         The part of ret[1][0] is the status of iDDS service.
         The part of ret[1][1] is the returned payload.
