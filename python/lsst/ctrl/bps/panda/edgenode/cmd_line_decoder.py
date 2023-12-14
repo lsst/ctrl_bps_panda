@@ -42,12 +42,27 @@ import sys
 from lsst.resources import ResourcePath
 
 
-def replace_placeholders(cmd_line, tag, replancements):
-    """Reaplce the placeholders."""
-    occurences_to_replace = re.findall(f"<{tag}:(.*?)>", cmd_line)
-    for placeholder in occurences_to_replace:
-        if placeholder in replancements:
-            cmd_line = cmd_line.replace(f"<{tag}:{placeholder}>", replancements[placeholder])
+def replace_placeholders(cmd_line: str, tag: str, replacements: dict[str, str]) -> str:
+    """Replace the placeholders.
+
+    Parameters
+    ----------
+    cmd_line : `str`
+        Command line.
+    tag : `str`
+        Tag to use for finding placeholders.
+    replacements : `dict` [`str`, `str`]
+        Replacements indexed by place holder string.
+
+    Returns
+    -------
+    modified : `str`
+        Processed command line.
+    """
+    occurrences_to_replace = re.findall(f"<{tag}:(.*?)>", cmd_line)
+    for placeholder in occurrences_to_replace:
+        if placeholder in replacements:
+            cmd_line = cmd_line.replace(f"<{tag}:{placeholder}>", replacements[placeholder])
         else:
             raise ValueError(
                 "ValueError exception thrown, because "
@@ -82,7 +97,7 @@ def replace_files_placeholders(cmd_line, files):
     Parameters
     ----------
     cmd_line : `str`
-        Command line
+        Command line.
     files : `str`
         String with key:value pairs separated by the '+' sign.
         Keys contain the file type (runQgraphFile,

@@ -25,7 +25,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Unit tests for cmd_line_embedder.py
+"""Unit tests for cmd_line_embedder.py.
 """
 import unittest
 
@@ -34,7 +34,7 @@ from lsst.ctrl.bps.panda.cmd_line_embedder import CommandLineEmbedder
 
 
 class TestCmdLineEmbedder(unittest.TestCase):
-    """Test CmdLineEmbedder class"""
+    """Test CmdLineEmbedder class."""
 
     def setUp(self):
         self.cmd_line_0 = "<ENV:CTRL_MPEXEC_DIR>/mycmd -b {key1} -c {key2} -d {key3} {key4}"

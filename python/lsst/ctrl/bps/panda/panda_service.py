@@ -52,7 +52,7 @@ _LOG = logging.getLogger(__name__)
 
 
 class PanDAService(BaseWmsService):
-    """PanDA version of WMS service"""
+    """PanDA version of WMS service."""
 
     def prepare(self, config, generic_workflow, out_prefix=None):
         # Docstring inherited from BaseWmsService.prepare.
@@ -315,14 +315,14 @@ class PanDAService(BaseWmsService):
 
 
 class PandaBpsWmsWorkflow(BaseWmsWorkflow):
-    """A single Panda based workflow
+    """A single Panda based workflow.
 
     Parameters
     ----------
     name : `str`
-        Unique name for Workflow
+        Unique name for Workflow.
     config : `lsst.ctrl.bps.BpsConfig`
-        BPS configuration that includes necessary submit/runtime information
+        BPS configuration that includes necessary submit/runtime information.
     """
 
     def __init__(self, name, config=None):
