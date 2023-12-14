@@ -71,9 +71,9 @@ def copy_files_for_distribution(files_to_stage, file_distribution_uri, max_copy_
 
     Parameters
     ----------
-    local_pfns : `dict` [`str`, `str`]
+    files_to_stage : `dict` [`str`, `str`]
         Files which need to be copied to a workflow staging area.
-    file_distribution_uri: `str`
+    file_distribution_uri : `str`
         Path on the edge node accessed storage,
         including access protocol, bucket name to place files.
     max_copy_workers : `int`
@@ -126,7 +126,7 @@ def get_idds_client(config):
     Returns
     -------
     idds_client: `idds.client.clientmanager.ClientManager`
-        iDDS ClientManager object.
+        The iDDS ClientManager object.
     """
     idds_server = None
     if isinstance(config, BpsConfig):
@@ -146,20 +146,20 @@ def get_idds_result(ret):
 
     Parameters
     ----------
-    ret: `tuple` of (`int`, (`bool`, payload)).
-        The first part ret[0] is the status of PanDA relay service.
-        The part of ret[1][0] is the status of iDDS service.
-        The part of ret[1][1] is the returned payload.
-        If ret[1][0] is False, ret[1][1] can be error messages.
+    ret : `tuple` [`int`, `tuple` [`bool`, payload ]]
+        The first part ``ret[0]`` is the status of PanDA relay service.
+        The part of ``ret[1][0]`` is the status of iDDS service.
+        The part of ``ret[1][1]`` is the returned payload.
+        If ``ret[1][0]`` is `False`, ``ret[1][1]`` can be error messages.
 
     Returns
     -------
     status: `bool`
         The status of iDDS calls.
-    result: `int` or `list` or `dict`
-        The result returned from iDDS.
-    error: `str`
-        Error messages.
+    result: `int` or `list` or `dict` or `None`
+        The result returned from iDDS. `None` if error state.
+    error: `str` or `None`
+        Error messages. `None` if no error state.
     """
     # https://panda-wms.readthedocs.io/en/latest/client/rest_idds.html
     if not isinstance(ret, list | tuple) or ret[0] != 0:
@@ -350,7 +350,7 @@ def add_final_idds_work(
     generic_workflow : `lsst.ctrl.bps.GenericWorkflow`
         Generic workflow in which to find the final job.
     idds_client_workflow : `idds.workflowv2.workflow.Workflow`
-        iDDS client representation of the workflow to which the final task
+        The iDDS client representation of the workflow to which the final task
         is added.
     dag_sink_work : `list` [`idds.doma.workflowv2.domapandawork.DomaPanDAWork`]
         The work nodes in the client workflow which have no successors.
@@ -415,35 +415,35 @@ def convert_exec_string_to_hex(cmdline):
     Parameters
     ----------
     cmdline : `str`
-        UTF-8 command line string
+        UTF-8 command line string.
 
     Returns
     -------
     hex : `str`
-        Hex representation of string
+        Hex representation of string.
     """
     return binascii.hexlify(cmdline.encode()).decode("utf-8")
 
 
 def add_decoder_prefix(config, cmd_line, distribution_path, files):
     """Compose the command line sent to the pilot from the functional part
-    (the actual SW running) and the middleware part (containers invocation)
+    (the actual SW running) and the middleware part (containers invocation).
 
     Parameters
     ----------
     config : `lsst.ctrl.bps.BpsConfig`
-        Configuration information
+        Configuration information.
     cmd_line : `str`
-        UTF-8 based functional part of the command line
+        UTF-8 based functional part of the command line.
     distribution_path : `str`
-        URI of path where all files are located for distribution
+        URI of path where all files are located for distribution.
     files : `tuple` [`dict` [`str`, `str`], `list` [`str`]]
-        File names needed for a task (copied local, direct access)
+        File names needed for a task (copied local, direct access).
 
     Returns
     -------
     decoder_prefix : `str`
-        Full command line to be executed on the edge node
+        Full command line to be executed on the edge node.
     """
     # Manipulate file paths for placement on cmdline
     files_plc_hldr = {}
@@ -484,11 +484,11 @@ def add_idds_work(config, generic_workflow, idds_workflow):
     Parameters
     ----------
     config : `lsst.ctrl.bps.BpsConfig`
-        BPS configuration
+        BPS configuration.
     generic_workflow : `lsst.ctrl.bps.GenericWorkflow`
         Generic workflow containing jobs to convert.
     idds_workflow : `idds.workflowv2.workflow.Workflow`
-        iDDS workflow to which the converted jobs should be added.
+        The iDDS workflow to which the converted jobs should be added.
 
     Returns
     -------
@@ -497,7 +497,7 @@ def add_idds_work(config, generic_workflow, idds_workflow):
     dag_sink_work : `list` [`idds.doma.workflowv2.domapandawork.DomaPanDAWork`]
         The work nodes in the client workflow which have no successors.
     task_count : `int`
-        Number of tasks in iDDS workflow used for unique task names
+        Number of tasks in iDDS workflow used for unique task names.
 
     Raises
     ------

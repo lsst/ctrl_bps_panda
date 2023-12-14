@@ -47,7 +47,7 @@ class PandaAuthCli(LoaderCLI):
 @log_file_option()
 @log_tty_option()
 @log_label_option()
-def cli(log_level, long_log, log_file, log_tty, log_label):
+def cli(log_level, long_log, log_file, log_tty, log_label):  # numpydoc ignore=PR01
     """Run click command-line."""
     pass
 

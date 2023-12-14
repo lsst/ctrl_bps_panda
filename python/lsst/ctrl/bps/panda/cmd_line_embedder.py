@@ -33,15 +33,15 @@ _LOG = logging.getLogger(__name__)
 
 
 class CommandLineEmbedder:
-    """Class embeds static (constant across a task) values
+    """Embed static (constant across a task) values
     into the pipeline execution command line
-    and resolves submission side environment variables
+    and resolves submission side environment variables.
 
     Parameters
     ----------
     config : `lsst.ctrl.bps.BpsConfig`
         BPS configuration that includes the list of dynamic
-        (uniques per job) and submission side resolved variables
+        (uniques per job) and submission side resolved variables.
     """
 
     def __init__(self, config):
@@ -54,11 +54,11 @@ class CommandLineEmbedder:
         defined once.
 
         This function offloads the edge node processing
-        and number of parameters transferred together with job
+        and number of parameters transferred together with job.
 
         Parameters
         ----------
-        cmd_line:  `str`
+        cmd_line : `str`
             Command line to be processed.
         lazy_vars : `dict`
             Lazy variables and its values.
@@ -80,10 +80,10 @@ class CommandLineEmbedder:
 
         Parameters
         ----------
-        cmd_line: `str`
-            command line to be processed
-        files: `list` [`lsst.ctrl.bps.GenericWorkflowFile`]
-            input and output files for the job.
+        cmd_line : `str`
+            Command line to be processed.
+        files : `list` [`lsst.ctrl.bps.GenericWorkflowFile`]
+            Input and output files for the job.
 
         Returns
         -------
@@ -153,25 +153,25 @@ class CommandLineEmbedder:
 
     def substitute_command_line(self, cmd_line, lazy_vars, job_name, gwfiles):
         """Preprocess the command line leaving for the edge node evaluation
-        only parameters which are job / environment dependent
+        only parameters which are job / environment dependent.
 
         Parameters
         ----------
-        cmd_line: `str`
+        cmd_line : `str`
             Command line containing all lazy placeholders.
-        lazy_vars: `dict` [ `str`, `str` ]
+        lazy_vars : `dict` [ `str`, `str` ]
             Lazy parameter name/values.
-        job_name: `str`
+        job_name : `str`
             Job name proposed by BPS.
-        gwfiles: `list` [`lsst.ctrl.bps.GenericWorkflowFile`]
+        gwfiles : `list` [`lsst.ctrl.bps.GenericWorkflowFile`]
             Job files.
 
         Returns
         -------
         cmd_line: `str`
-            processed command line
+            Processed command line.
         file_name: `str`
-            job pseudo input file name
+            Job pseudo input file name.
 
         Raises
         ------
