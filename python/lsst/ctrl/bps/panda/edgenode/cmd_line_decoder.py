@@ -35,6 +35,7 @@ of the BPS but a part of the payload wrapper.
 It decodes the hexified command line.
 """
 import binascii
+import json
 import os
 import re
 import sys
@@ -153,16 +154,74 @@ def deliver_input_files(src_path, files, skip_copy):
                 dest_base = dest_base.join(base_dir)
             for file_to_copy in files_to_copy:
                 dest = dest_base.join(file_to_copy.basename())
-                dest.transfer_from(file_to_copy, transfer="copy")
+                if file_name_placeholder == "orderIdMapFilename":
+                    if not dest.exists():
+                        dest.transfer_from(file_to_copy, transfer="copy")
+                else:
+                    dest.transfer_from(file_to_copy, transfer="copy")
                 print(f"copied {file_to_copy.path} to {dest.path}", file=sys.stderr)
             if file_name_placeholder == "job_executable":
                 os.chmod(dest.path, 0o777)
 
 
+def replace_event_file(params, files):
+    ret_status = True
+    with_events = False
+    files = files.split("+")
+    file_map = {}
+    for file in files:
+        file_name_placeholder, file_pfn = file.split(":")
+        file_map[file_name_placeholder] = file_pfn
+    order_id_map_file = file_map.get("orderIdMapFilename", None)
+    order_id_map = {}
+    try:
+        if order_id_map_file and os.path.exists(order_id_map_file):
+            with open(order_id_map_file) as f:
+                order_id_map = json.load(f)
+    except Exception as ex:
+        print("failed to load orderIdMapFilename: %s" % str(ex))
+
+    params_map = {}
+    params_list = params.split("+")
+    for param in params_list:
+        if "eventservice_" in param:
+            with_events = True
+            label, event = param.split(":")
+            event_id = event.split("_")[1]
+            event_base_id = event_id.split("^")[0]
+            event_order = event_id.split("^")[1].split("^")[0]
+            event_index = str(int(event_base_id) + int(event_order) - 1)
+            if not order_id_map:
+                ret_status = False
+
+            if label not in order_id_map or event_index not in order_id_map[label]:
+                ret_status = False
+
+            params_map[param] = {"event_index": event_index, "order_id_map": order_id_map[label]}
+    return ret_status, with_events, params_map
+
+
 deliver_input_files(sys.argv[3], sys.argv[4], sys.argv[5])
 cmd_line = str(binascii.unhexlify(sys.argv[1]).decode())
-data_params = sys.argv[2].split("+")
+# data_params = sys.argv[2].split("+")
+data_params = sys.argv[2]
 cmd_line = replace_environment_vars(cmd_line)
+
+ret_event_status, with_events, event_params_map = replace_event_file(data_params, sys.argv[4])
+print("ret_event_status: %s, with_events: %s" % (ret_event_status, with_events))
+if not ret_event_status:
+    print("failed to parse event to files")
+    exit_code = 1
+    sys.exit(exit_code)
+
+for event_param in event_params_map:
+    event_index = event_params_map[event_param]["event_index"]
+    pseudo_file_name = event_params_map[event_param]["order_id_map"][event_index]
+    print("replacing event %s with event_index %s to: %s" % (event_param, event_index, pseudo_file_name))
+    cmd_line = cmd_line.replace(event_param, pseudo_file_name)
+    data_params = data_params.replace(event_param, pseudo_file_name)
+
+data_params = data_params.split("+")
 
 """Replace the pipetask command line placeholders
  with actual data provided in the script call
@@ -174,6 +233,7 @@ for key_value_pair in data_params[1:]:
     (key, value) = key_value_pair.split(":")
     cmd_line = cmd_line.replace("{" + key + "}", value)
 
+print("executable command line:")
 print(cmd_line)
 
 exit_status = os.system(cmd_line)
