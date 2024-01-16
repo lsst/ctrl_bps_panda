@@ -63,7 +63,7 @@ class PanDAService(BaseWmsService):
         workflow.write(out_prefix)
         return workflow
 
-    def submit(self, workflow):
+    def submit(self, workflow, **kwargs):
         _, max_copy_workers = self.config.search(
             "maxCopyWorkers", opt={"default": PANDA_DEFAULT_MAX_COPY_WORKERS}
         )
@@ -72,6 +72,7 @@ class PanDAService(BaseWmsService):
         lsst_temp = "LSST_RUN_TEMP_SPACE"
         if lsst_temp in file_distribution_uri and lsst_temp not in os.environ:
             file_distribution_uri = self.config["fileDistributionEndPointDefault"]
+        _LOG.info("file_distribution_uri: %s", file_distribution_uri)
 
         copy_files_for_distribution(workflow.files_to_pre_stage, file_distribution_uri, max_copy_workers)
 
