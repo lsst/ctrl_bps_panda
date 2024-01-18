@@ -182,8 +182,12 @@ class PanDAService(BaseWmsService):
             workflow_status = head["status"]["attributes"]["_name_"]
             if workflow_status in ["Finished", "SubFinished"]:
                 wms_report.state = WmsStates.SUCCEEDED
-            elif workflow_status in ["Failed", "Cancelled", "Suspended", "Expired"]:
+            elif workflow_status in ["Failed", "Expired"]:
                 wms_report.state = WmsStates.FAILED
+            elif workflow_status in ["Cancelled"]:
+                wms_report.state = WmsStates.DELETED
+            elif workflow_status in ["Suspended"]:
+                wms_report.state = WmsStates.HELD
             else:
                 wms_report.state = WmsStates.RUNNING
 
