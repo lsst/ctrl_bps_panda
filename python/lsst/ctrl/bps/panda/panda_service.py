@@ -179,12 +179,22 @@ class PanDAService(BaseWmsService):
                 WmsStates.PRUNED: "output_missing_files",
             }
 
-            # workflow status to report as SUCCEEDED
-            wf_status = ["Finished", "SubFinished", "Transforming"]
+            workflow_status = head["status"]["attributes"]["_name_"]
+            if workflow_status in ["Finished", "SubFinished"]:
+                wms_report.state = WmsStates.SUCCEEDED
+            elif workflow_status in ["Failed", "Expired"]:
+                wms_report.state = WmsStates.FAILED
+            elif workflow_status in ["Cancelled"]:
+                wms_report.state = WmsStates.DELETED
+            elif workflow_status in ["Suspended"]:
+                wms_report.state = WmsStates.HELD
+            else:
+                wms_report.state = WmsStates.RUNNING
 
-            wf_succeed = False
-
-            tasks.sort(key=lambda x: x["transform_workload_id"])
+            try:
+                tasks.sort(key=lambda x: x["transform_workload_id"])
+            except Exception:
+                tasks.sort(key=lambda x: x["transform_id"])
 
             exit_codes_all = {}
             # Loop over all tasks data returned by idds_client
@@ -228,13 +238,14 @@ class PanDAService(BaseWmsService):
                 for state in WmsStates:
                     njobs = 0
                     # Each WmsState have many iDDS status mapped to it.
-                    for mappedstate in state_map[status]:
-                        if state in file_map and mappedstate == state:
-                            if task[file_map[mappedstate]] is not None:
-                                njobs = task[file_map[mappedstate]]
-                            if state == WmsStates.RUNNING:
-                                njobs += task["output_new_files"] - task["input_new_files"]
-                            break
+                    if status in state_map:
+                        for mappedstate in state_map[status]:
+                            if state in file_map and mappedstate == state:
+                                if task[file_map[mappedstate]] is not None:
+                                    njobs = task[file_map[mappedstate]]
+                                if state == WmsStates.RUNNING:
+                                    njobs += task["output_new_files"] - task["input_new_files"]
+                                break
                     wms_report.job_state_counts[state] += njobs
                     taskstatus[state] = njobs
                 wms_report.job_summary[tasklabel] = taskstatus
@@ -244,13 +255,6 @@ class PanDAService(BaseWmsService):
                     wms_report.run_summary += ";"
                 wms_report.run_summary += f"{tasklabel}:{str(totaljobs)}"
 
-                if status in wf_status:
-                    wf_succeed = True
-                    wms_report.state = state_map[status][0]
-
-            # All tasks have failed, set the workflow FAILED
-            if not wf_succeed:
-                wms_report.state = WmsStates.FAILED
             wms_report.exit_code_summary = exit_codes_all
             run_reports.append(wms_report)
 
