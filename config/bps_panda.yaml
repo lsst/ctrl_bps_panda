@@ -5,7 +5,7 @@ defaultPreCmdOpts: "--long-log --log-level=VERBOSE --log-file payload-log.json -
 qgraphPreCmdOpts: "--long-log --log-level=VERBOSE"  # don't need payload-log.json on submit side.
 
 # Limit the number of jobs in a single PanDA task
-maxJobsPerTask: 30000
+maxJobsPerTask: 10000
 
 # Default production label: managed
 prodSourceLabel: managed
