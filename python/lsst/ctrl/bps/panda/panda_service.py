@@ -44,6 +44,7 @@ from lsst.ctrl.bps.panda.utils import (
     add_final_idds_work,
     add_idds_work,
     copy_files_for_distribution,
+    create_idds_build_workflow,
     get_idds_client,
     get_idds_result,
 )
@@ -63,31 +64,52 @@ class PanDAService(BaseWmsService):
         workflow.write(out_prefix)
         return workflow
 
-    def submit(self, workflow):
-        _, max_copy_workers = self.config.search(
-            "maxCopyWorkers", opt={"default": PANDA_DEFAULT_MAX_COPY_WORKERS}
-        )
-        # Docstring inherited from BaseWmsService.submit.
-        file_distribution_uri = self.config["fileDistributionEndPoint"]
-        lsst_temp = "LSST_RUN_TEMP_SPACE"
-        if lsst_temp in file_distribution_uri and lsst_temp not in os.environ:
-            file_distribution_uri = self.config["fileDistributionEndPointDefault"]
+    def submit(self, workflow, **kwargs):
+        config = kwargs["config"] if "config" in kwargs else None
+        remote_build = kwargs["remote_build"] if "remote_build" in kwargs else None
 
-        copy_files_for_distribution(workflow.files_to_pre_stage, file_distribution_uri, max_copy_workers)
+        if config and remote_build:
+            _LOG.info("remote build")
 
-        idds_client = get_idds_client(self.config)
-        ret = idds_client.submit(workflow.idds_client_workflow, username=None, use_dataset_name=False)
-        _LOG.debug("iDDS client manager submit returned = %s", ret)
+            idds_build_workflow = create_idds_build_workflow(**kwargs)
+            idds_client = get_idds_client(self.config)
+            ret = idds_client.submit_build(idds_build_workflow, username=None, use_dataset_name=False)
+            _LOG.debug("iDDS client manager submit returned = %s", ret)
 
-        # Check submission success
-        status, result, error = get_idds_result(ret)
-        if status:
-            request_id = int(result)
+            # Check submission success
+            status, result, error = get_idds_result(ret)
+            if status:
+                request_id = int(result)
+            else:
+                raise RuntimeError(f"Error submitting to PanDA service: {error}")
+
+            _LOG.info("Submitted into iDDs with request id=%s", request_id)
+            idds_build_workflow.run_id = request_id
+            return idds_build_workflow
         else:
-            raise RuntimeError(f"Error submitting to PanDA service: {error}")
+            _, max_copy_workers = self.config.search(
+                "maxCopyWorkers", opt={"default": PANDA_DEFAULT_MAX_COPY_WORKERS}
+            )
+            # Docstring inherited from BaseWmsService.submit.
+            file_distribution_uri = self.config["fileDistributionEndPoint"]
+            lsst_temp = "LSST_RUN_TEMP_SPACE"
+            if lsst_temp in file_distribution_uri and lsst_temp not in os.environ:
+                file_distribution_uri = self.config["fileDistributionEndPointDefault"]
+            copy_files_for_distribution(workflow.files_to_pre_stage, file_distribution_uri, max_copy_workers)
 
-        _LOG.info("Submitted into iDDs with request id=%s", request_id)
-        workflow.run_id = request_id
+            idds_client = get_idds_client(self.config)
+            ret = idds_client.submit(workflow.idds_client_workflow, username=None, use_dataset_name=False)
+            _LOG.debug("iDDS client manager submit returned = %s", ret)
+
+            # Check submission success
+            status, result, error = get_idds_result(ret)
+            if status:
+                request_id = int(result)
+            else:
+                raise RuntimeError(f"Error submitting to PanDA service: {error}")
+
+            _LOG.info("Submitted into iDDs with request id=%s", request_id)
+            workflow.run_id = request_id
 
     def restart(self, wms_workflow_id):
         # Docstring inherited from BaseWmsService.restart.
@@ -199,6 +221,11 @@ class PanDAService(BaseWmsService):
             exit_codes_all = {}
             # Loop over all tasks data returned by idds_client
             for task in tasks:
+                if task["transform_id"] is None:
+                    # Not created task (It happens because of an outer join
+                    # between requests table and transforms table).
+                    continue
+
                 exit_codes = []
                 totaljobs = task["output_total_files"]
                 wms_report.total_number_jobs += totaljobs
@@ -209,31 +236,36 @@ class PanDAService(BaseWmsService):
                 # if the state is failed, gather exit code information
                 if status in ["SubFinished", "Failed"]:
                     transform_workload_id = task["transform_workload_id"]
-                    new_ret = idds_client.get_contents_output_ext(
-                        request_id=wms_workflow_id, workload_id=transform_workload_id
-                    )
-                    request_status = new_ret[0]
-                    if request_status != 0:
-                        raise RuntimeError(
-                            f"Error to get workflow status: {new_ret} for id: {wms_workflow_id}"
+                    if not (task["transform_name"] and task["transform_name"].startswith("build_task")):
+                        new_ret = idds_client.get_contents_output_ext(
+                            request_id=wms_workflow_id, workload_id=transform_workload_id
                         )
-                    # task_info is a dictionary of len 1 that contains a list
-                    # of dicts containing panda job info
-                    task_info = new_ret[1][1]
+                        _LOG.debug(
+                            "PanDA get task %s detail returned = %s", transform_workload_id, str(new_ret)
+                        )
 
-                    if len(task_info) == 1:
-                        wmskey = list(task_info.keys())[0]
-                        wmsjobs = task_info[wmskey]
-                    else:
-                        raise RuntimeError(
-                            f"Unexpected job return from PanDA: {task_info} for id: {transform_workload_id}"
-                        )
-                    exit_codes = [
-                        wmsjob["trans_exit_code"]
-                        for wmsjob in wmsjobs
-                        if wmsjob["trans_exit_code"] is not None and int(wmsjob["trans_exit_code"]) != 0
-                    ]
-                    exit_codes_all[tasklabel] = exit_codes
+                        request_status = new_ret[0]
+                        if request_status != 0:
+                            raise RuntimeError(
+                                f"Error to get workflow status: {new_ret} for id: {wms_workflow_id}"
+                            )
+                        # task_info is a dictionary of len 1 that contains a list
+                        # of dicts containing panda job info
+                        task_info = new_ret[1][1]
+
+                        if len(task_info) == 1:
+                            wmskey = list(task_info.keys())[0]
+                            wmsjobs = task_info[wmskey]
+                        else:
+                            raise RuntimeError(
+                                f"Unexpected job return from PanDA: {task_info} for id: {transform_workload_id}"
+                            )
+                        exit_codes = [
+                            wmsjob["trans_exit_code"]
+                            for wmsjob in wmsjobs
+                            if wmsjob["trans_exit_code"] is not None and int(wmsjob["trans_exit_code"]) != 0
+                        ]
+                        exit_codes_all[tasklabel] = exit_codes
                 # Fill number of jobs in all WmsStates
                 for state in WmsStates:
                     njobs = 0
