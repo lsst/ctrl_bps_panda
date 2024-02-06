@@ -199,7 +199,7 @@ class PanDAService(BaseWmsService):
             exit_codes_all = {}
             # Loop over all tasks data returned by idds_client
             for task in tasks:
-                if task['transform_id'] is None:
+                if task["transform_id"] is None:
                     # Not created task (It happends because of an outer join
                     # between requests table and transforms table).
                     continue
@@ -218,9 +218,9 @@ class PanDAService(BaseWmsService):
                         new_ret = idds_client.get_contents_output_ext(
                             request_id=wms_workflow_id, workload_id=transform_workload_id
                         )
-                        _LOG.debug("PanDA get task %s detail returned = %s",
-                                   transform_workload_id,
-                                   str(new_ret))
+                        _LOG.debug(
+                            "PanDA get task %s detail returned = %s", transform_workload_id, str(new_ret)
+                        )
 
                         request_status = new_ret[0]
                         if request_status != 0:
