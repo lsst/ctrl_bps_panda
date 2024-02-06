@@ -200,7 +200,7 @@ class PanDAService(BaseWmsService):
             # Loop over all tasks data returned by idds_client
             for task in tasks:
                 if task["transform_id"] is None:
-                    # Not created task (It happends because of an outer join
+                    # Not created task (It happens because of an outer join
                     # between requests table and transforms table).
                     continue
 
