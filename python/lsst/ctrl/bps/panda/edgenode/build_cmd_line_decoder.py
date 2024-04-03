@@ -30,7 +30,13 @@ _LOG = logging.getLogger(__name__)
 
 
 def download_extract_archive(filename):
-    """Download and extract the tarball from pandacache"""
+    """Download and extract the tarball from pandacache.
+    
+    Parameters
+    ----------
+    filename : `str`
+        The filename to download.
+    """
     archive_basename = os.path.basename(filename)
     target_dir = os.getcwd()
     full_output_filename = os.path.join(target_dir, archive_basename)
@@ -62,7 +68,15 @@ def download_extract_archive(filename):
 
 
 def create_idds_workflow(config_file, compute_site):
-    """Create pipeline workflow at remote site"""
+    """Create pipeline workflow at remote site.
+
+    Parameters
+    ----------
+    config_file : `str`
+        Name of the configuration file.
+    compute_site : `str`
+        Name of the compute site.
+    """
     _LOG.info("Starting building process")
     kwargs = {}
     if compute_site:
