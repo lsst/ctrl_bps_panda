@@ -31,7 +31,7 @@ _LOG = logging.getLogger(__name__)
 
 def download_extract_archive(filename):
     """Download and extract the tarball from pandacache.
-    
+
     Parameters
     ----------
     filename : `str`
