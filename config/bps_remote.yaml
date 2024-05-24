@@ -1,6 +1,6 @@
 remoteBuild:
   enabled: true
-  requestMemory: 4096
+  requestMemory: 4000
   runnerCommand: >
     export SHELL=/bin/bash;
     unset PYTHONPATH;
