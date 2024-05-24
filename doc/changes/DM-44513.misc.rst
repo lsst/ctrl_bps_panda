@@ -1,0 +1,1 @@
+change the defult memory to 4000 and the default memoryMultipler to 1.5

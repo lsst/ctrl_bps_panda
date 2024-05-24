@@ -660,11 +660,11 @@ def create_idds_build_workflow(**kwargs):
     _, files = remote_build.search("files", opt={"default": []})
     submit_path = config["submitPath"]
     files.append(config_file)
-    archive_filename = "jobO.%s.tar.gz" % str(uuid.uuid4())
+    archive_filename = f"jobO.{str(uuid.uuid4())}.tar.gz"
     archive_filename = create_archive_file(submit_path, archive_filename, files)
-    _LOG.info("archive file name: %s" % archive_filename)
+    _LOG.info(f"archive file name: {archive_filename}")
     remote_filename = copy_files_to_pandacache(archive_filename)
-    _LOG.info("pandacache file: %s" % remote_filename)
+    _LOG.info(f"pandacache file: {remote_filename}")
 
     _LOG.info(type(remote_build))
     search_opt = {"replaceVars": True, "expandEnvVars": False, "replaceEnvVars": False, "required": False}
