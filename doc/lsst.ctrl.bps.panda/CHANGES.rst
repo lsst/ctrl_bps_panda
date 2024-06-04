@@ -1,3 +1,30 @@
+lsst-ctrl-bps-panda v27.0.0 (2024-06-04)
+========================================
+
+New Features
+------------
+
+- Mapped bps memory boosting attributes to PanDA memory boosting attributes (`DM-36981 <https://rubinobs.atlassian.net/browse/DM-36981>`_)
+- Updated the open-source license to allow for the code to be distributed with either GPLv3 or BSD 3-clause license. (`DM-37231 <https://rubinobs.atlassian.net/browse/DM-37231>`_)
+- Updated ``panda-service.py`` to return exit code information. (`DM-41543 <https://rubinobs.atlassian.net/browse/DM-41543>`_)
+
+
+Bug Fixes
+---------
+
+- Restored error message about too long pseudo filename while preparing workflow. (`DM-40699 <https://rubinobs.atlassian.net/browse/DM-40699>`_)
+- Fixed a typo in the reference of a job attribute. (`DM-42090 <https://rubinobs.atlassian.net/browse/DM-42090>`_)
+- Fixed report function during checking of request status. (`DM-42528 <https://rubinobs.atlassian.net/browse/DM-42528>`_)
+- * Fixed bps panda report function when no tasks are created (when no tasks are created, a SQL outer join will create an empty row which seems like a task is created).
+  * Fixed bps panda report function when a build task fails and doesn't report any file information. (`DM-42788 <https://rubinobs.atlassian.net/browse/DM-42788>`_)
+
+
+Other Changes and Additions
+---------------------------
+
+- Removed error message about too long pseudo filename while preparing workflow as the length is now checked by iDDS. (`DM-41545 <https://rubinobs.atlassian.net/browse/DM-41545>`_)
+
+
 lsst-ctrl-bps-panda v26.0.0 (2023-09-25)
 ========================================
 
