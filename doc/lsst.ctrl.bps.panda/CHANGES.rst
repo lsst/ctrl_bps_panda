@@ -4,29 +4,29 @@ lsst-ctrl-bps-panda v26.0.0 (2023-09-25)
 New Features
 ------------
 
-- Enabled saving of iDDS client workflow objects at prepare bps submission stage. (`DM-34915 <https://jira.lsstcorp.org/browse/DM-34915>`_)
-- Updated BPS PanDA plugin to work with quantum-backed butler. (`DM-39553 <https://jira.lsstcorp.org/browse/DM-39553>`_)
+- Enabled saving of iDDS client workflow objects at prepare bps submission stage. (`DM-34915 <https://rubinobs.atlassian.net/browse/DM-34915>`_)
+- Updated BPS PanDA plugin to work with quantum-backed butler. (`DM-39553 <https://rubinobs.atlassian.net/browse/DM-39553>`_)
 
 
 Bug Fixes
 ---------
 
-- Fixed the execution butler transfer bug when period in run collection. (`DM-37843 <https://jira.lsstcorp.org/browse/DM-37843>`_)
-- Fixed PanDA task chunking bug that caused assertion error during submission for really large QuantumGraphs. (`DM-38101 <https://jira.lsstcorp.org/browse/DM-38101>`_)
-- Handled dependency issues when preparing rescue workflows. (`DM-38377 <https://jira.lsstcorp.org/browse/DM-38377>`_)
+- Fixed the execution butler transfer bug when period in run collection. (`DM-37843 <https://rubinobs.atlassian.net/browse/DM-37843>`_)
+- Fixed PanDA task chunking bug that caused assertion error during submission for really large QuantumGraphs. (`DM-38101 <https://rubinobs.atlassian.net/browse/DM-38101>`_)
+- Handled dependency issues when preparing rescue workflows. (`DM-38377 <https://rubinobs.atlassian.net/browse/DM-38377>`_)
 
 
 Other Changes and Additions
 ---------------------------
 
-- Now print out pseudo_file_name in the bps PanDA plugin to simplify debugging if there is a problem with it being too long. (`DM-37352 <https://jira.lsstcorp.org/browse/DM-37352>`_)
-- Included butler repo URL in log message labels. (`DM-37961 <https://jira.lsstcorp.org/browse/DM-37961>`_)
-- Modified PanDA task chunking to be evenly divided. (`DM-38101 <https://jira.lsstcorp.org/browse/DM-38101>`_)
-- Updated ``ctrl_bps_panda/config/bps_usdf.yaml`` to allow for local custom setup (`DM-38142 <https://jira.lsstcorp.org/browse/DM-38142>`_)
+- Now print out pseudo_file_name in the bps PanDA plugin to simplify debugging if there is a problem with it being too long. (`DM-37352 <https://rubinobs.atlassian.net/browse/DM-37352>`_)
+- Included butler repo URL in log message labels. (`DM-37961 <https://rubinobs.atlassian.net/browse/DM-37961>`_)
+- Modified PanDA task chunking to be evenly divided. (`DM-38101 <https://rubinobs.atlassian.net/browse/DM-38101>`_)
+- Updated ``ctrl_bps_panda/config/bps_usdf.yaml`` to allow for local custom setup (`DM-38142 <https://rubinobs.atlassian.net/browse/DM-38142>`_)
 - Updated some default YAML values to more easily allow parts to be
   modified as well as provided values to go with the updated bps
-  default YAML (e.g., no longer need ``runQuantumCommands``). (`DM-38307 <https://jira.lsstcorp.org/browse/DM-38307>`_)
-- Moved ``fileDistributionEndPoint`` from lustre to weka in USDF configuration. (`DM-39334 <https://jira.lsstcorp.org/browse/DM-39334>`_)
+  default YAML (e.g., no longer need ``runQuantumCommands``). (`DM-38307 <https://rubinobs.atlassian.net/browse/DM-38307>`_)
+- Moved ``fileDistributionEndPoint`` from lustre to weka in USDF configuration. (`DM-39334 <https://rubinobs.atlassian.net/browse/DM-39334>`_)
 
 
 lsst-ctrl-bps-panda v25.0.0 (2023-03-02)
@@ -35,16 +35,16 @@ lsst-ctrl-bps-panda v25.0.0 (2023-03-02)
 New Features
 ------------
 
-- Added cancel, restart, report and ping functions in bps panda plugin. (`DM-34964 <https://jira.lsstcorp.org/browse/DM-34964>`_)
-- Added ``setupLSSTEnv`` in ``bps_usdf.yaml`` which can be updated to setup developer lsst pipelines stack. (`DM-36376 <https://jira.lsstcorp.org/browse/DM-36376>`_)
+- Added cancel, restart, report and ping functions in bps panda plugin. (`DM-34964 <https://rubinobs.atlassian.net/browse/DM-34964>`_)
+- Added ``setupLSSTEnv`` in ``bps_usdf.yaml`` which can be updated to setup developer lsst pipelines stack. (`DM-36376 <https://rubinobs.atlassian.net/browse/DM-36376>`_)
 
 
 Bug Fixes
 ---------
 
-- Fixed the bug that bps-panda reports success when there is an authentication permission error. (`DM-35364 <https://jira.lsstcorp.org/browse/DM-35364>`_)
-- Fixed the setting of ``number_of_retries`` to `None` in ``idds_tasks``. (`DM-35508 <https://jira.lsstcorp.org/browse/DM-35508>`_)
-- Fixed the bug that iDDS results can be something other than a string. (`DM-35964 <https://jira.lsstcorp.org/browse/DM-35964>`_)
+- Fixed the bug that bps-panda reports success when there is an authentication permission error. (`DM-35364 <https://rubinobs.atlassian.net/browse/DM-35364>`_)
+- Fixed the setting of ``number_of_retries`` to `None` in ``idds_tasks``. (`DM-35508 <https://rubinobs.atlassian.net/browse/DM-35508>`_)
+- Fixed the bug that iDDS results can be something other than a string. (`DM-35964 <https://rubinobs.atlassian.net/browse/DM-35964>`_)
 
 
 Other Changes and Additions
@@ -52,7 +52,7 @@ Other Changes and Additions
 
 - Added the ability to prioritize dev/test tasks
   * ``prodSourceLabel``: it can be configured in the submission yaml, by default it is 'managed'
-  * ``priority``: it can be set in the submission yaml, by default it is 500 (`DM-36375 <https://jira.lsstcorp.org/browse/DM-36375>`_)
+  * ``priority``: it can be set in the submission yaml, by default it is 500 (`DM-36375 <https://rubinobs.atlassian.net/browse/DM-36375>`_)
 
 
 lsst-ctrl-bps-panda v24.0.0 (2022-08-29)
@@ -62,7 +62,7 @@ New Features
 ------------
 
 - This package has been extracted from ``lsst_ctrl_bps`` into a standalone package to make it easier to manage development of the PanDA plugin.
-  (`DM-33521 <https://jira.lsstcorp.org/browse/DM-33521>`_)
+  (`DM-33521 <https://rubinobs.atlassian.net/browse/DM-33521>`_)
 - Introduced a new parameter ``dockerImageLocation`` in the PanDA IDF configuration yaml file to pull lsst release containers from **GAR (Google Artifact Registry)**. This parameter is trailed with ``'/'``, so it could be used in ``sw_image`` path in the following example. And the ``sw_image`` will still refer to the **Docker hub**, if the parameter ``dockerImageLocation`` is empty or not defined, to make the ``sw_image`` backward compatible with previous PanDA IDF configuration yaml files.
 
   In the user bps submission yaml file, just prepend this parameter to the sw_image path, that is:
@@ -77,27 +77,27 @@ New Features
 
   .. code-block:: YAML
 
-     sw_image: "lsstsqre/centos:7-stack-lsst_distrib-w_2022_05" (`DM-32992 <https://jira.lsstcorp.org/browse/DM-32992>`_)
+     sw_image: "lsstsqre/centos:7-stack-lsst_distrib-w_2022_05" (`DM-32992 <https://rubinobs.atlassian.net/browse/DM-32992>`_)
 
 Bug Fixes
 ---------
 
-- Update the path to the command line decoder in the config file and the documentation. (`DM-34574 <https://jira.lsstcorp.org/browse/DM-34574>`_)
+- Update the path to the command line decoder in the config file and the documentation. (`DM-34574 <https://rubinobs.atlassian.net/browse/DM-34574>`_)
 
 
 Other Changes and Additions
 ---------------------------
 
 - Changed the parameter ``runnerCommand`` in the PanDA IDF example yaml file, to start ``prmon`` to monitor the memory usage of the payload job.
-  This executable ``prmon`` is only available in releases after ``w_2022_05``. (`DM-32579 <https://jira.lsstcorp.org/browse/DM-32579>`_)
-- Make the PanDA example config more easily runnable from data-int RSP (`DM-32695 <https://jira.lsstcorp.org/browse/DM-32695>`_)
+  This executable ``prmon`` is only available in releases after ``w_2022_05``. (`DM-32579 <https://rubinobs.atlassian.net/browse/DM-32579>`_)
+- Make the PanDA example config more easily runnable from data-int RSP (`DM-32695 <https://rubinobs.atlassian.net/browse/DM-32695>`_)
 
 - * PanDA cloud was mapped from BPS compute site, fixed it.
   * Pass BPS cloud to PanDA cloud.
-  * Add supports for task priority, vo, working group, prodSourceLabel. (`DM-33889 <https://jira.lsstcorp.org/browse/DM-33889>`_)
+  * Add supports for task priority, vo, working group, prodSourceLabel. (`DM-33889 <https://rubinobs.atlassian.net/browse/DM-33889>`_)
 - Remove ``iddsServer`` from ``bps_idf.yml``, to use the iDDS server defined in the PanDA relay service.
-   Remove ``IDDS_CONFIG`` requirements (requiring ``idds`` version 0.10.6 and later). (`DM-34106 <https://jira.lsstcorp.org/browse/DM-34106>`_)
-- Add missing ``__all__`` statement to make the documentation render properly at https://pipelines.lsst.io. (`DM-34921 <https://jira.lsstcorp.org/browse/DM-34921>`_)
+   Remove ``IDDS_CONFIG`` requirements (requiring ``idds`` version 0.10.6 and later). (`DM-34106 <https://rubinobs.atlassian.net/browse/DM-34106>`_)
+- Add missing ``__all__`` statement to make the documentation render properly at https://pipelines.lsst.io. (`DM-34921 <https://rubinobs.atlassian.net/browse/DM-34921>`_)
 
 ctrl_bps v23.0.1 (2022-02-02)
 =============================
@@ -108,17 +108,17 @@ New Features
 - * Large tasks (> 30k jobs) splitted into chunks
   * Updated iDDS API usage for the most recent version
   * Updated iDDS API initialization to force PanDA proxy using the IAM user name for submitted workflow
-  * Added limit on number of characters in the task pseudo inputs (`DM-32675 <https://jira.lsstcorp.org/browse/DM-32675>`_)
+  * Added limit on number of characters in the task pseudo inputs (`DM-32675 <https://rubinobs.atlassian.net/browse/DM-32675>`_)
 - * New ``panda_auth`` command for handling PanDA authentication token.
     Includes status, reset, and clean capabilities.
-  * Added early check of PanDA authentication token in submission process. (`DM-32830 <https://jira.lsstcorp.org/browse/DM-32830>`_)
+  * Added early check of PanDA authentication token in submission process. (`DM-32830 <https://rubinobs.atlassian.net/browse/DM-32830>`_)
 
 Other Changes and Additions
 ---------------------------
 
 - * Changed printing of submit directory early.
   * Changed PanDA plugin to only print the numeric id when outputing the request/run id.
-  * Set maximum number of jobs in a PanDA task (maxJobsPerTask) to 70000 in config/bps_idf.yaml. (`DM-32830 <https://jira.lsstcorp.org/browse/DM-32830>`_)
+  * Set maximum number of jobs in a PanDA task (maxJobsPerTask) to 70000 in config/bps_idf.yaml. (`DM-32830 <https://rubinobs.atlassian.net/browse/DM-32830>`_)
 
 ctrl_bps v23.0.0 (2021-12-10)
 =============================
@@ -126,4 +126,4 @@ ctrl_bps v23.0.0 (2021-12-10)
 Other Changes and Additions
 ---------------------------
 
-- Provide a cleaned up version of default config yaml for PanDA-plugin on IDF (`DM-31476 <https://jira.lsstcorp.org/browse/DM-31476>`_)
+- Provide a cleaned up version of default config yaml for PanDA-plugin on IDF (`DM-31476 <https://rubinobs.atlassian.net/browse/DM-31476>`_)
