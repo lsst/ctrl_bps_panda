@@ -152,4 +152,4 @@ def panda_auth_update(idds_server=None, reset=False):
         # The success keys from get_status currently do not catch if invalid
         # idds server given.  So for now, check result string for keywords.
         if "request_id" not in ret[1][-1] or "status" not in ret[1][-1]:
-            raise RuntimeError(f"Error contacting PanDA service: {str(ret)}")
+            raise RuntimeError(f"Error contacting PanDA service: {ret}")

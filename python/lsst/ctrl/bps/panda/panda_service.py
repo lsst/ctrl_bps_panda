@@ -122,7 +122,7 @@ class PanDAService(BaseWmsService):
             _LOG.info("Restarting PanDA workflow %s", result)
             return wms_workflow_id, None, json.dumps(result)
 
-        return None, None, f"Error retry PanDA workflow: {str(error)}"
+        return None, None, f"Error retry PanDA workflow: {error}"
 
     def report(
         self,
@@ -285,7 +285,7 @@ class PanDAService(BaseWmsService):
                 # To fill the EXPECTED column
                 if wms_report.run_summary:
                     wms_report.run_summary += ";"
-                wms_report.run_summary += f"{tasklabel}:{str(totaljobs)}"
+                wms_report.run_summary += f"{tasklabel}:{totaljobs}"
 
             wms_report.exit_code_summary = exit_codes_all
             run_reports.append(wms_report)
@@ -322,7 +322,7 @@ class PanDAService(BaseWmsService):
             _LOG.info("Aborting PanDA workflow %s", result)
             return True, json.dumps(result)
 
-        return False, f"Error abort PanDA workflow: {str(error)}"
+        return False, f"Error abort PanDA workflow: {error}"
 
     def ping(self, pass_thru=None):
         # Docstring inherited from BaseWmsService.ping.
@@ -335,9 +335,9 @@ class PanDAService(BaseWmsService):
             if "Status" in result and result["Status"] == "OK":
                 return 0, None
 
-            return -1, f"Error ping PanDA service: {str(result)}"
+            return -1, f"Error ping PanDA service: {result}"
 
-        return -1, f"Error ping PanDA service: {str(error)}"
+        return -1, f"Error ping PanDA service: {error}"
 
     def run_submission_checks(self):
         # Docstring inherited from BaseWmsService.run_submission_checks.
