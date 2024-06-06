@@ -46,7 +46,7 @@ def download_extract_archive(filename):
         os.environ["PANDACACHE_URL"] = panda_cache_url
     elif "PANDACACHE_URL" not in os.environ and "PANDA_URL_SSL" in os.environ:
         os.environ["PANDACACHE_URL"] = os.environ["PANDA_URL_SSL"]
-    print("PANDACACHE_URL: %s" % os.environ.get("PANDACACHE_URL", None))
+    print("PANDACACHE_URL: {}".format(os.environ.get("PANDACACHE_URL", None)))
 
     from pandaclient import Client
 
@@ -64,7 +64,7 @@ def download_extract_archive(filename):
         f.extractall(target_dir)
     print(f"Extract {full_output_filename} to {target_dir}")
     os.remove(full_output_filename)
-    print("Remove %s" % full_output_filename)
+    print(f"Remove {full_output_filename}")
 
 
 def create_idds_workflow(config_file, compute_site):
@@ -131,7 +131,7 @@ print(f"INFO: compute site: {compute_site}")
 
 current_dir = os.getcwd()
 
-print("INFO: current dir: %s" % current_dir)
+print(f"INFO: current dir: {current_dir}")
 
 config, bps_workflow = create_idds_workflow(config_file, compute_site)
 idds_workflow = bps_workflow.idds_client_workflow
@@ -143,5 +143,5 @@ copy_files_for_distribution(
 
 idds_client = get_idds_client(config)
 ret = idds_client.update_build_request(request_id, signature, idds_workflow)
-print("update_build_request returns: %s" % str(ret))
+print(f"update_build_request returns: {ret}")
 sys.exit(ret[0])

@@ -170,7 +170,7 @@ def get_idds_result(ret):
         # The call may not be delivered to iDDS.
         status = False
         result = None
-        error = f"PanDA relay service returns errors: {str(ret)}"
+        error = f"PanDA relay service returns errors: {ret}"
     else:
         if ret[1][0]:
             status = True
@@ -184,7 +184,7 @@ def get_idds_result(ret):
             # iDDS returns errors
             status = False
             result = None
-            error = f"iDDS returns errors: {str(ret[1][1])}"
+            error = f"iDDS returns errors: {ret[1][1]}"
     return status, result, error
 
 
@@ -304,11 +304,9 @@ def _make_doma_work(config, generic_workflow, gwjob, task_count, task_chunk):
         executable=executable,
         primary_input_collection={
             "scope": "pseudo_dataset",
-            "name": f"pseudo_input_collection#{str(task_count)}",
+            "name": f"pseudo_input_collection#{task_count}",
         },
-        output_collections=[
-            {"scope": "pseudo_dataset", "name": f"pseudo_output_collection#{str(task_count)}"}
-        ],
+        output_collections=[{"scope": "pseudo_dataset", "name": f"pseudo_output_collection#{task_count}"}],
         log_collections=[],
         dependency_map=[],
         task_name=f"{generic_workflow.name}_{task_count:02d}_{gwjob.label}_{task_chunk:02d}",
@@ -660,11 +658,11 @@ def create_idds_build_workflow(**kwargs):
     _, files = remote_build.search("files", opt={"default": []})
     submit_path = config["submitPath"]
     files.append(config_file)
-    archive_filename = "jobO.%s.tar.gz" % str(uuid.uuid4())
+    archive_filename = f"jobO.{uuid.uuid4()}.tar.gz"
     archive_filename = create_archive_file(submit_path, archive_filename, files)
-    _LOG.info("archive file name: %s" % archive_filename)
+    _LOG.info(f"archive file name: {archive_filename}")
     remote_filename = copy_files_to_pandacache(archive_filename)
-    _LOG.info("pandacache file: %s" % remote_filename)
+    _LOG.info(f"pandacache file: {remote_filename}")
 
     _LOG.info(type(remote_build))
     search_opt = {"replaceVars": True, "expandEnvVars": False, "replaceEnvVars": False, "required": False}

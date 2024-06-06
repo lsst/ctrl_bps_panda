@@ -1,1 +1,0 @@
-Fix report function during checking request status.

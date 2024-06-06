@@ -1,2 +1,0 @@
-Fix bps panda report function when no tasks are created (when no tasks are created, a sql outer join will create an empty row which seems a task is created).
-Fix bps panda report function when a build task fails while doesn't report any file information.
