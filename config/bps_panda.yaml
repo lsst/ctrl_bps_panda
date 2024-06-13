@@ -7,7 +7,7 @@ qgraphPreCmdOpts: "--long-log --log-level=VERBOSE"  # don't need payload-log.jso
 requestMemory: 4000          # PanDA does the scheduling based on memory request
 
 # Memory multipler for boosting memory
-memoryMultiplier: 1.5
+memoryMultiplier: 2.0
 
 # Limit the number of jobs in a single PanDA task
 maxJobsPerTask: 10000
