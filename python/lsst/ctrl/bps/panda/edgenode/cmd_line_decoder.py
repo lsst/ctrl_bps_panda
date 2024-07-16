@@ -165,6 +165,24 @@ def deliver_input_files(src_path, files, skip_copy):
 
 
 def replace_event_file(params, files):
+    """Replace events with node id.
+
+    Parameters
+    ----------
+    params : `str`
+        String with parameters separated by the '+' sign..
+    files : `str`
+        String with file names separated by the '+' sign.
+
+    Returns
+    -------
+    ret_status: `bool`
+        Status of this function.
+    with_events: `bool`
+        Whether contains events.
+    params_map: `dict`
+        Parameter map with event information.
+    """
     ret_status = True
     with_events = False
     files = files.split("+")
@@ -208,7 +226,7 @@ data_params = sys.argv[2]
 cmd_line = replace_environment_vars(cmd_line)
 
 ret_event_status, with_events, event_params_map = replace_event_file(data_params, sys.argv[4])
-print("ret_event_status: %s, with_events: %s" % (ret_event_status, with_events))
+print(f"ret_event_status: {ret_event_status}, with_events: {with_events}")
 if not ret_event_status:
     print("failed to parse event to files")
     exit_code = 1
@@ -217,7 +235,7 @@ if not ret_event_status:
 for event_param in event_params_map:
     event_index = event_params_map[event_param]["event_index"]
     pseudo_file_name = event_params_map[event_param]["order_id_map"][event_index]
-    print("replacing event %s with event_index %s to: %s" % (event_param, event_index, pseudo_file_name))
+    print(f"replacing event {event_param} with event_index {event_index} to: {pseudo_file_name}")
     cmd_line = cmd_line.replace(event_param, pseudo_file_name)
     data_params = data_params.replace(event_param, pseudo_file_name)
 
