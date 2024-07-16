@@ -211,8 +211,15 @@ def _make_pseudo_filename(config, gwjob):
 
 
 def _make_doma_work(
-    config, generic_workflow, gwjob, task_count, task_chunk, enable_event_service=False,
-    es_files={}, es_label=None, max_events_per_job=10,
+    config,
+    generic_workflow,
+    gwjob,
+    task_count,
+    task_chunk,
+    enable_event_service=False,
+    es_files={},
+    es_label=None,
+    max_events_per_job=10,
 ):
     """Make the DOMA Work object for a PanDA task.
 
