@@ -1,0 +1,4 @@
+# enable EventService
+
+enableEventService: True
+maxEventsPerJob: 10
