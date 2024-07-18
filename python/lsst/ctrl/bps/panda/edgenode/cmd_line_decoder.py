@@ -197,7 +197,7 @@ def replace_event_file(params, files):
             with open(order_id_map_file) as f:
                 order_id_map = json.load(f)
     except Exception as ex:
-        print(f"failed to load orderIdMapFilename: {str(ex)}")
+        print(f"failed to load orderIdMapFilename: {ex}")
 
     params_map = {}
     params_list = params.split("+")
