@@ -4,10 +4,10 @@ placeholderParams: ['qgraphNodeId', 'qgraphId']
 defaultPreCmdOpts: "--long-log --log-level=VERBOSE --log-file payload-log.json --log-label REPO={butlerConfig}"
 qgraphPreCmdOpts: "--long-log --log-level=VERBOSE"  # don't need payload-log.json on submit side.
 
-requestMemory: 4000          # PanDA does the scheduling based on memory request
+# requestMemory: 4000          # PanDA does the scheduling based on memory request
 
 # Memory multipler for boosting memory
-memoryMultiplier: 2.0
+# memoryMultiplier: 2.0
 
 # Limit the number of jobs in a single PanDA task
 maxJobsPerTask: 10000
