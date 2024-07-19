@@ -34,18 +34,8 @@ jobCleanup: "rm -fr EXEC_REPO-*;"
 
 
 # Specify memory request for executionButler, pipetaskInit and forcedPhotCoadd, placeholder for now
-# requestMemory: 4000          # PanDA does the scheduling based on memory request
 executionButler:
-  # requestMemory: 7000
   queue: "LANCS_Rubin_Merge"
 
 finalJob:
-  # requestMemory: 7000
   queue: "LANCS_Rubin_Merge"
-
-# pipetask:
-#   pipetaskInit:
-#     requestMemory: 4000
-
-#  forcedPhotCoadd:
-#    requestMemory: 4000
