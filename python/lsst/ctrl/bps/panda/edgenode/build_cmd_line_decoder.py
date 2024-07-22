@@ -46,7 +46,8 @@ def download_extract_archive(filename):
         os.environ["PANDACACHE_URL"] = panda_cache_url
     elif "PANDACACHE_URL" not in os.environ and "PANDA_URL_SSL" in os.environ:
         os.environ["PANDACACHE_URL"] = os.environ["PANDA_URL_SSL"]
-    print("PANDACACHE_URL: {}".format(os.environ.get("PANDACACHE_URL", None)))
+    panda_cache_url = os.environ.get("PANDACACHE_URL", None)
+    print(f"PANDACACHE_URL: {panda_cache_url}")
 
     from pandaclient import Client
 

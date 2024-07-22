@@ -1,0 +1,1 @@
+remove requestMemory, memoryMultipler and numberOfRetries from bps_panda which are defined in bps

@@ -4,9 +4,6 @@ placeholderParams: ['qgraphNodeId', 'qgraphId']
 defaultPreCmdOpts: "--long-log --log-level=VERBOSE --log-file payload-log.json --log-label REPO={butlerConfig}"
 qgraphPreCmdOpts: "--long-log --log-level=VERBOSE"  # don't need payload-log.json on submit side.
 
-# Memory multipler for boosting memory
-memoryMultiplier: 1.2
-
 # Limit the number of jobs in a single PanDA task
 maxJobsPerTask: 10000
 
@@ -15,9 +12,6 @@ prodSourceLabel: managed
 
 # Default job priority
 priority: 500
-
-# Default number of retries
-numberOfRetries: 3
 
 # Job values which sites need to define for runnerCommand:
 # custom_lsst_setup - user defined special environments
