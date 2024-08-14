@@ -76,7 +76,7 @@ def copy_files_for_distribution(files_to_stage, file_distribution_uri, max_copy_
     ----------
     files_to_stage : `dict` [`str`, `str`]
         Files which need to be copied to a workflow staging area.
-    file_distribution_uri : `str`
+    file_distribution_uri : `ResourcePath`
         Path on the edge node accessed storage,
         including access protocol, bucket name to place files.
     max_copy_workers : `int`
@@ -93,16 +93,14 @@ def copy_files_for_distribution(files_to_stage, file_distribution_uri, max_copy_
     for local_pfn in files_to_stage.values():
         folder_name = os.path.basename(os.path.normpath(local_pfn))
         if os.path.isdir(local_pfn):
+            folder_uri = file_distribution_uri.join(folder_name, forceDirectory=True)
             files_in_folder = ResourcePath.findFileResources([local_pfn])
             for file in files_in_folder:
                 file_name = file.basename()
-                files_to_copy[file] = ResourcePath(
-                    os.path.join(file_distribution_uri, folder_name, file_name)
-                )
+                files_to_copy[file] = folder_uri.join(file_name, forceDirectory=False)
         else:
-            files_to_copy[ResourcePath(local_pfn)] = ResourcePath(
-                os.path.join(file_distribution_uri, folder_name)
-            )
+            folder_uri = file_distribution_uri.join(folder_name, forceDirectory=False)
+            files_to_copy[ResourcePath(local_pfn, forceDirectory=False)] = folder_uri
 
     copy_executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_copy_workers)
     future_file_copy = []
