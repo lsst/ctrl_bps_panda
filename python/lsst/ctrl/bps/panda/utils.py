@@ -219,7 +219,8 @@ def _make_doma_work(
     enable_event_service=False,
     es_files={},
     es_label=None,
-    max_events_per_job=10,
+    max_payloads_per_panda_job=10,
+    max_wms_job_wall_time=None,
 ):
     """Make the DOMA Work object for a PanDA task.
 
@@ -290,9 +291,28 @@ def _make_doma_work(
         generic_workflow.get_job_inputs(gwjob.name) + generic_workflow.get_job_outputs(gwjob.name),
     )
 
+    my_log = f"enable_event_service {enable_event_service} for {gwjob.label}"
+    _LOG.info(my_log)
+    if enable_event_service:
+        if gwjob.request_walltime and max_wms_job_wall_time:
+            my_log = (f"requestWalltime({gwjob.request_walltime}) "
+                      f"and maxWmsJobWalltime({max_wms_job_wall_time}) are set, "
+                      "max_payloads_per_panda_job is int(max_wms_job_wall_time / gwjob.request_walltime), "
+                      "ignore maxPayloadsPerPandaJob.")
+            _LOG.info(my_log)
+            max_payloads_per_panda_job = int(max_wms_job_wall_time / gwjob.request_walltime)
+            if max_payloads_per_panda_job < 2:
+                my_log = (f"max_payloads_per_panda_job ({max_payloads_per_panda_job}) is too small, "
+                          "disable EventService")
+                _LOG.info(my_log)
+                enable_event_service = False
+
+    maxwalltime = gwjob.request_walltime if gwjob.request_walltime else PANDA_DEFAULT_MAX_WALLTIME
     if enable_event_service:
         for es_name in es_files:
             local_pfns[es_name] = es_files[es_name]
+        if max_wms_job_wall_time:
+            maxwalltime = max_wms_job_wall_time
 
     for gwfile in generic_workflow.get_job_inputs(gwjob.name, transfer_only=True):
         local_pfns[gwfile.name] = gwfile.src_uri
@@ -349,9 +369,9 @@ def _make_doma_work(
         vo=vo,
         es=enable_event_service,
         es_label=es_label,
-        max_events_per_job=max_events_per_job,
+        max_events_per_job=max_payloads_per_panda_job,
         maxattempt=gwjob.number_of_retries if gwjob.number_of_retries else PANDA_DEFAULT_MAX_ATTEMPTS,
-        maxwalltime=gwjob.request_walltime if gwjob.request_walltime else PANDA_DEFAULT_MAX_WALLTIME,
+        maxwalltime=maxwalltime,
     )
     return work, local_pfns
 
@@ -528,9 +548,12 @@ def add_idds_work(config, generic_workflow, idds_workflow):
         If cannot recover from dependency issues after pass through workflow.
     """
     # event service
-    _, enable_event_service = config.search("enableEventService", opt={"default": False})
-    _, max_events_per_job = config.search("maxEventsPerJob", opt={"default": 10})
-    _LOG.info("enableEventService: %s, maxEventsPerJob: %s", enable_event_service, max_events_per_job)
+    _, enable_event_service = config.search("enableEventService", opt={"default": None})
+    _, max_payloads_per_panda_job = config.search("maxPayloadsPerPandaJob", opt={"default": 10})
+    _, max_wms_job_wall_time = config.search("maxWmsJobWalltime", opt={"default": None})
+    my_log = (f"enableEventService: {enable_event_service}, "
+              f"maxPayloadsPerPandaJob: {max_payloads_per_panda_job}")
+    _LOG.info(my_log)
 
     # Limit number of jobs in single PanDA task
     _, max_jobs_per_task = config.search("maxJobsPerTask", opt={"default": PANDA_DEFAULT_MAX_JOBS_PER_TASK})
@@ -547,6 +570,8 @@ def add_idds_work(config, generic_workflow, idds_workflow):
     doma_tree = None
     order_id_map_file = None
     if enable_event_service:
+        enable_event_service = enable_event_service.split(",")
+        enable_event_service = [i.strip() for i in enable_event_service]
         doma_tree = DomaTree(name=generic_workflow.name)
         submit_path = config[".bps_defined.submitPath"]
         _, order_id_map_filename = config.search(
@@ -561,9 +586,6 @@ def add_idds_work(config, generic_workflow, idds_workflow):
     # To avoid dying due to optimizing number of times through workflow,
     # catch dependency issues to loop through again later.
     jobs_with_dependency_issues = {}
-
-    # first task 'pipetaskInit' should not be eventservice
-    first_task = True
 
     # Assume jobs with same label share config values
     for job_label in generic_workflow.labels:
@@ -609,12 +631,12 @@ def add_idds_work(config, generic_workflow, idds_workflow):
                     gwjob,
                     task_count,
                     task_chunk,
-                    enable_event_service=False if first_task else enable_event_service,
+                    enable_event_service=True if job_label in enable_event_service else False,
                     es_files=es_files,
                     es_label=job_label,
-                    max_events_per_job=max_events_per_job,
+                    max_payloads_per_panda_job=max_payloads_per_panda_job,
+                    max_wms_job_wall_time=max_wms_job_wall_time,
                 )
-                first_task = False
                 name_works[work.task_name] = work
                 files_to_pre_stage.update(files)
                 idds_workflow.add_work(work)
