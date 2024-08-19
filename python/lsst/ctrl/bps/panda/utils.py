@@ -295,15 +295,19 @@ def _make_doma_work(
     _LOG.info(my_log)
     if enable_event_service:
         if gwjob.request_walltime and max_wms_job_wall_time:
-            my_log = (f"requestWalltime({gwjob.request_walltime}) "
-                      f"and maxWmsJobWalltime({max_wms_job_wall_time}) are set, "
-                      "max_payloads_per_panda_job is int(max_wms_job_wall_time / gwjob.request_walltime), "
-                      "ignore maxPayloadsPerPandaJob.")
+            my_log = (
+                f"requestWalltime({gwjob.request_walltime}) "
+                f"and maxWmsJobWalltime({max_wms_job_wall_time}) are set, "
+                "max_payloads_per_panda_job is int(max_wms_job_wall_time / gwjob.request_walltime), "
+                "ignore maxPayloadsPerPandaJob."
+            )
             _LOG.info(my_log)
             max_payloads_per_panda_job = int(max_wms_job_wall_time / gwjob.request_walltime)
             if max_payloads_per_panda_job < 2:
-                my_log = (f"max_payloads_per_panda_job ({max_payloads_per_panda_job}) is too small, "
-                          "disable EventService")
+                my_log = (
+                    f"max_payloads_per_panda_job ({max_payloads_per_panda_job}) is too small, "
+                    "disable EventService"
+                )
                 _LOG.info(my_log)
                 enable_event_service = False
 
@@ -551,8 +555,10 @@ def add_idds_work(config, generic_workflow, idds_workflow):
     _, enable_event_service = config.search("enableEventService", opt={"default": None})
     _, max_payloads_per_panda_job = config.search("maxPayloadsPerPandaJob", opt={"default": 10})
     _, max_wms_job_wall_time = config.search("maxWmsJobWalltime", opt={"default": None})
-    my_log = (f"enableEventService: {enable_event_service}, "
-              f"maxPayloadsPerPandaJob: {max_payloads_per_panda_job}")
+    my_log = (
+        f"enableEventService: {enable_event_service}, "
+        f"maxPayloadsPerPandaJob: {max_payloads_per_panda_job}"
+    )
     _LOG.info(my_log)
 
     # Limit number of jobs in single PanDA task
