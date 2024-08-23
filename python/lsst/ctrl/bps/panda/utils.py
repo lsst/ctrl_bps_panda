@@ -633,13 +633,16 @@ def add_idds_work(config, generic_workflow, idds_workflow):
             if job_count == 1:
                 # Create new PanDA task object
                 task_count += 1
+                work_enable_event_service = False
+                if enable_event_service and job_label in enable_event_service:
+                    work_enable_event_service = True
                 work, files = _make_doma_work(
                     config,
                     generic_workflow,
                     gwjob,
                     task_count,
                     task_chunk,
-                    enable_event_service=True if job_label in enable_event_service else False,
+                    enable_event_service=work_enable_event_service,
                     es_files=es_files,
                     es_label=job_label,
                     max_payloads_per_panda_job=max_payloads_per_panda_job,
