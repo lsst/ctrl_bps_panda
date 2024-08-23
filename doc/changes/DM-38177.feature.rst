@@ -1,1 +1,1 @@
-updates to support event service
+Updated to support event service which allows multiple short payload jobs to run in a single PanDA job for efficiency.

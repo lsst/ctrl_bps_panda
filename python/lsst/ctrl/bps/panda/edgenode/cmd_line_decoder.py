@@ -170,16 +170,36 @@ def replace_event_file(params, files):
     Parameters
     ----------
     params : `str`
-        String with parameters separated by the '+' sign..
+        String with parameters separated by the '+' sign.
+        The format for EventService is 'label:eventservice_<baseid>^<localid>'
+        for LSST. The '<localid>' should start from 1, which means the first
+        event of the file 'label:eventservice_<baseid>'. In EventService,
+        all pseudo files for a label is recorded in the 'orderIdMapFilename'
+        file, with a dict {'label0':{"0":"pseudo_file0", "1":..},'label1':..}.
+        For example, for a workflow with 100 pseudo files for the 'isr' label,
+        the dict will be {'isr': {"0": "pseudo0", "1": "pseudo_file1",
+        "99": "pseudo_file99"}}. If we split the 100 pseudo files into 10 jobs
+        with 10 files per job, the 10 eventservice file name will be
+        'isr:event_service_0' for events ["0"~"9"], 'isr:event_service_10' for
+        events ["10"~"19"], ..., and 'isr:event_service_90' for
+        events ["90"~"99"]. The event 'isr:event_service_90^5' means
+        the 5th event in 'isr:event_service_90', which is '90 + 5 -1=94' and
+        will be mapped to file 'pseudo_file94'.
+        Example params:
+            isr:eventservice_90^10+somethingelse.
     files : `str`
         String with file names separated by the '+' sign.
+        Example:
+            orderIdMapFilename:panda_order_id_map.json+runQgraphFile:a.qgraph
 
     Returns
     -------
     ret_status: `bool`
-        Status of this function.
+        Status of this function. If eventservice is enabled but this function
+        cannot handle it, it should return False. Otherwise it should
+        return True.
     with_events: `bool`
-        Whether contains events.
+        Whether there are event parameters.
     params_map: `dict`
         Parameter map with event information.
     """
@@ -193,6 +213,8 @@ def replace_event_file(params, files):
     order_id_map_file = file_map.get("orderIdMapFilename", None)
     order_id_map = {}
     try:
+        # The orderIdMapFilename should exist locally or copied to current
+        # directory by deliver_input_files
         if order_id_map_file and os.path.exists(order_id_map_file):
             with open(order_id_map_file) as f:
                 order_id_map = json.load(f)
@@ -210,10 +232,20 @@ def replace_event_file(params, files):
             event_order = event_id.split("^")[1].split("^")[0]
             event_index = str(int(event_base_id) + int(event_order) - 1)
             if not order_id_map:
+                print("EventSerice is enabled but order_id_map file doesn't exist.")
                 ret_status = False
+                break
 
-            if label not in order_id_map or event_index not in order_id_map[label]:
+            if label not in order_id_map:
+                print(f"EventSerice is enabled but label {label} doesn't in the keys"
+                      f" of order_id_map {order_id_map.keys()}")
                 ret_status = False
+                break
+            if event_index not in order_id_map[label]:
+                print(f"EventSerice is enabled but event_index {event_index} is not"
+                      f" in order_id_map[{label}] {order_id_map[label].keys()}")
+                ret_status = False
+                break
 
             params_map[param] = {"event_index": event_index, "order_id_map": order_id_map[label]}
     return ret_status, with_events, params_map
@@ -221,10 +253,12 @@ def replace_event_file(params, files):
 
 deliver_input_files(sys.argv[3], sys.argv[4], sys.argv[5])
 cmd_line = str(binascii.unhexlify(sys.argv[1]).decode())
-# data_params = sys.argv[2].split("+")
 data_params = sys.argv[2]
 cmd_line = replace_environment_vars(cmd_line)
 
+# If EventService is enabled, data_params will only contain event information.
+# So we need to convert the event information to LSST pseudo file names.
+# If EventService is not enabled, this part will not change data_params.
 ret_event_status, with_events, event_params_map = replace_event_file(data_params, sys.argv[4])
 print(f"ret_event_status: {ret_event_status}, with_events: {with_events}")
 if not ret_event_status:
@@ -232,6 +266,7 @@ if not ret_event_status:
     exit_code = 1
     sys.exit(exit_code)
 
+# If EventService enabled, string like "isr:eventservice_90^5" wi
 for event_param in event_params_map:
     event_index = event_params_map[event_param]["event_index"]
     pseudo_file_name = event_params_map[event_param]["order_id_map"][event_index]

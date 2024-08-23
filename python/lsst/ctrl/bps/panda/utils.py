@@ -315,7 +315,9 @@ def _make_doma_work(
     if enable_event_service:
         for es_name in es_files:
             local_pfns[es_name] = es_files[es_name]
-        if max_wms_job_wall_time:
+        if gwjob.request_walltime and max_payloads_per_panda_job:
+            maxwalltime = gwjob.request_walltime * max_payloads_per_panda_job
+        elif max_wms_job_wall_time:
             maxwalltime = max_wms_job_wall_time
 
     for gwfile in generic_workflow.get_job_inputs(gwjob.name, transfer_only=True):
