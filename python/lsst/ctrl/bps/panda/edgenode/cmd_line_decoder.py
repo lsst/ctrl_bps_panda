@@ -237,13 +237,17 @@ def replace_event_file(params, files):
                 break
 
             if label not in order_id_map:
-                print(f"EventSerice is enabled but label {label} doesn't in the keys"
-                      f" of order_id_map {order_id_map.keys()}")
+                print(
+                    f"EventSerice is enabled but label {label} doesn't in the keys"
+                    f" of order_id_map {order_id_map.keys()}"
+                )
                 ret_status = False
                 break
             if event_index not in order_id_map[label]:
-                print(f"EventSerice is enabled but event_index {event_index} is not"
-                      f" in order_id_map[{label}] {order_id_map[label].keys()}")
+                print(
+                    f"EventSerice is enabled but event_index {event_index} is not"
+                    f" in order_id_map[{label}] {order_id_map[label].keys()}"
+                )
                 ret_status = False
                 break
 
