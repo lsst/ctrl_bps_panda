@@ -556,8 +556,9 @@ def add_idds_work(config, generic_workflow, idds_workflow):
     """
     # event service
     _, enable_event_service = config.search("enableEventService", opt={"default": None})
-    _, max_payloads_per_panda_job = config.search("maxPayloadsPerPandaJob",
-                                                  opt={"default": PANDA_DEFAULT_MAX_PAYLOADS_PER_PANDA_JOB})
+    _, max_payloads_per_panda_job = config.search(
+        "maxPayloadsPerPandaJob", opt={"default": PANDA_DEFAULT_MAX_PAYLOADS_PER_PANDA_JOB}
+    )
     _, max_wms_job_wall_time = config.search("maxWmsJobWalltime", opt={"default": None})
     my_log = (
         f"enableEventService: {enable_event_service}, "
