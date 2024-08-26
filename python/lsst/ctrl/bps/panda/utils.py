@@ -55,6 +55,7 @@ from lsst.ctrl.bps.panda.constants import (
     PANDA_DEFAULT_CORE_COUNT,
     PANDA_DEFAULT_MAX_ATTEMPTS,
     PANDA_DEFAULT_MAX_JOBS_PER_TASK,
+    PANDA_DEFAULT_MAX_PAYLOADS_PER_PANDA_JOB,
     PANDA_DEFAULT_MAX_WALLTIME,
     PANDA_DEFAULT_ORDER_ID_MAP_FILE,
     PANDA_DEFAULT_PRIORITY,
@@ -64,7 +65,6 @@ from lsst.ctrl.bps.panda.constants import (
     PANDA_DEFAULT_RSS_MAX,
     PANDA_DEFAULT_TASK_TYPE,
     PANDA_DEFAULT_VO,
-    PANDA_DEFAULT_MAX_PAYLOADS_PER_PANDA_JOB,
 )
 from lsst.resources import ResourcePath
 
