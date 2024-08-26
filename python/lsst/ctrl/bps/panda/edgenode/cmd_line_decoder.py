@@ -200,8 +200,8 @@ def replace_event_file(params, files):
         return True.
     with_events: `bool`
         Whether there are event parameters.
-    params_map: `dict`
-        Parameter map with event information.
+    params_map: `dict` [`str`, `dict`]
+        Parameter map for event information.
     """
     ret_status = True
     with_events = False
@@ -266,11 +266,10 @@ cmd_line = replace_environment_vars(cmd_line)
 ret_event_status, with_events, event_params_map = replace_event_file(data_params, sys.argv[4])
 print(f"ret_event_status: {ret_event_status}, with_events: {with_events}")
 if not ret_event_status:
-    print("failed to parse event to files")
+    print("failed to map EventService parameters to original LSST pseudo file names")
     exit_code = 1
     sys.exit(exit_code)
 
-# If EventService enabled, string like "isr:eventservice_90^5" wi
 for event_param in event_params_map:
     event_index = event_params_map[event_param]["event_index"]
     pseudo_file_name = event_params_map[event_param]["order_id_map"][event_index]

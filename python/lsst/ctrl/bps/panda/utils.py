@@ -64,6 +64,7 @@ from lsst.ctrl.bps.panda.constants import (
     PANDA_DEFAULT_RSS_MAX,
     PANDA_DEFAULT_TASK_TYPE,
     PANDA_DEFAULT_VO,
+    PANDA_DEFAULT_MAX_PAYLOADS_PER_PANDA_JOB,
 )
 from lsst.resources import ResourcePath
 
@@ -219,7 +220,7 @@ def _make_doma_work(
     enable_event_service=False,
     es_files={},
     es_label=None,
-    max_payloads_per_panda_job=10,
+    max_payloads_per_panda_job=PANDA_DEFAULT_MAX_PAYLOADS_PER_PANDA_JOB,
     max_wms_job_wall_time=None,
 ):
     """Make the DOMA Work object for a PanDA task.
@@ -555,7 +556,8 @@ def add_idds_work(config, generic_workflow, idds_workflow):
     """
     # event service
     _, enable_event_service = config.search("enableEventService", opt={"default": None})
-    _, max_payloads_per_panda_job = config.search("maxPayloadsPerPandaJob", opt={"default": 10})
+    _, max_payloads_per_panda_job = config.search("maxPayloadsPerPandaJob",
+                                                  opt={"default": PANDA_DEFAULT_MAX_PAYLOADS_PER_PANDA_JOB})
     _, max_wms_job_wall_time = config.search("maxWmsJobWalltime", opt={"default": None})
     my_log = (
         f"enableEventService: {enable_event_service}, "
@@ -587,7 +589,6 @@ def add_idds_work(config, generic_workflow, idds_workflow):
         )
         order_id_map_file = os.path.join(submit_path, order_id_map_filename)
         order_id_map = doma_tree.order_jobs_from_generic_workflow(generic_workflow, order_id_map_file)
-        # print(json.dumps(order_id_map, sort_keys=True, indent=4))
         es_files = {"orderIdMapFilename": order_id_map_file}
         files_to_pre_stage.update(es_files)
 
@@ -705,12 +706,14 @@ def add_idds_work(config, generic_workflow, idds_workflow):
             work.dependency_map.append({"name": pseudo_filename, "order_id": order_id, "dependencies": deps})
         _LOG.info("Successfully recovered.")
 
-    if enable_event_service:
-        for task_name in name_works:
-            work = name_works[task_name]
-            # trigger the setter function
-            work.dependency_map = work.dependency_map
+    for task_name in name_works:
+        work = name_works[task_name]
+        # trigger the setter function which will validate the dependency_map:
+        # 1) check the name length to avoid the the name too long,
+        # 2) check to avoid duplicated items.
+        work.dependency_map = work.dependency_map
 
+    if enable_event_service:
         for label_name in order_id_map:
             for order_id in order_id_map[label_name]:
                 job_name = order_id_map[label_name][order_id]
