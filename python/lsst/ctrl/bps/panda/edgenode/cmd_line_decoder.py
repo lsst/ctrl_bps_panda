@@ -237,6 +237,9 @@ def replace_event_file(params, files):
             # However, for LSST, the '<numberOfEvents>' is always 1.
             # When <numberOfEvents> is 1, it will not show. So for LSST,
             # we will see 'label:eventservice_<baseid>^<localid>'.
+            # However, to leave posibilities for future updates,
+            # the line below has two splits based on '^', which is from
+            # the original EventService parameter format.
             event_order = event_id.split("^")[1].split("^")[0]
             event_index = str(int(event_base_id) + int(event_order) - 1)
             if not order_id_map:
