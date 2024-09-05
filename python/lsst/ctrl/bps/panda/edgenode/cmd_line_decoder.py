@@ -231,6 +231,12 @@ def replace_event_file(params, files):
             label, event = param.split(":")
             event_id = event.split("_")[1]
             event_base_id = event_id.split("^")[0]
+            # The original format for EventService parameter is
+            # 'label:eventservice_<baseid>^<localid>^<numberOfEvents>',
+            # which can have multiple events per EventService job.
+            # However, for LSST, the '<numberOfEvents>' is always 1.
+            # When <numberOfEvents> is 1, it will not show. So for LSST,
+            # we will see 'label:eventservice_<baseid>^<localid>'.
             event_order = event_id.split("^")[1].split("^")[0]
             event_index = str(int(event_base_id) + int(event_order) - 1)
             if not order_id_map:
