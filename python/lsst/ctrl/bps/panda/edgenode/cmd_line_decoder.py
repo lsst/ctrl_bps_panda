@@ -172,22 +172,23 @@ def replace_event_file(params, files):
     params : `str`
         String with parameters separated by the '+' sign.
         Example params:
-            isr:eventservice_90^10+somethingelse. This part 'isr:eventservice_90^10'
-            is the EventService parameter.
+            isr:eventservice_90^10+somethingelse. This part
+            'isr:eventservice_90^10' is the EventService parameter.
         The format for the EventService parameter for LSST is
-        'label:eventservice_<baseid>^<localid>'. The '<localid>' should start from 1,
-        which means the first event of the file 'label:eventservice_<baseid>'. In
-        EventService, all pseudo files for a label is recorded in the 'orderIdMapFilename'
-        file, with a dict {'label0':{"0":"pseudo_file0", "1":..},'label1':..}.
+        'label:eventservice_<baseid>^<localid>'. The '<localid>' should
+        start from 1, which means the first event of the file
+        'label:eventservice_<baseid>'. In EventService, all pseudo files
+        for a label is recorded in the 'orderIdMapFilename' file, with
+        a dict {'label0':{"0":"pseudo_file0", "1":..},'label1':..}.
         For example, for a workflow with 100 pseudo files for the 'isr' label,
         the dict will be {'isr': {"0": "pseudo0", "1": "pseudo_file1",
-        "99": "pseudo_file99"}}. If we split the 100 pseudo files into 5 PanDA jobs
-        with 20 files per PanDA job, the 5 eventservice group name will be
+        "99": "pseudo_file99"}}. If we split the 100 pseudo files into 5 PanDA
+        jobs with 20 files per PanDA job, the 5 eventservice group name will be
         'isr:event_service_0' for events ["0"~"19"], 'isr:event_service_20' for
-        events ["20"~"39"], ..., and 'isr:event_service_80' for
-        events ["80"~"99"]. The EventService param 'isr:event_service_80^5' means
-        the 5th event in the group 'isr:event_service_80', which is '80 + 5 -1=84' and
-        will be mapped to file 'pseudo_file84'.
+        events ["20"~"39"], ..., and 'isr:event_service_80' for events
+        ["80"~"99"]. The EventService param 'isr:event_service_80^5' means the
+        5th event in the group 'isr:event_service_80', which is '80 + 5 -1=84'
+        and will be mapped to file 'pseudo_file84'.
     files : `str`
         String with file names separated by the '+' sign.
         Example:
