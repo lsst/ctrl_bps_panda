@@ -13,7 +13,6 @@ import os
 import sys
 import tarfile
 
-from lsst.ctrl.bps.bps_utils import _create_execution_butler
 from lsst.ctrl.bps.constants import DEFAULT_MEM_FMT, DEFAULT_MEM_UNIT
 from lsst.ctrl.bps.drivers import prepare_driver
 from lsst.ctrl.bps.panda.constants import PANDA_DEFAULT_MAX_COPY_WORKERS
@@ -93,19 +92,6 @@ def create_idds_workflow(config_file, compute_site):
         mem_fmt=DEFAULT_MEM_FMT,
     ):
         wms_workflow_config, wms_workflow = prepare_driver(config_file, **kwargs)
-        _, when_create = wms_workflow_config.search(".executionButler.whenCreate")
-        if when_create.upper() == "SUBMIT":
-            _, execution_butler_dir = wms_workflow_config.search(".bps_defined.executionButlerDir")
-            _LOG.info("Creating execution butler in '%s'", execution_butler_dir)
-            with time_this(
-                log=_LOG, level=logging.INFO, prefix=None, msg="Completed creating execution butler"
-            ):
-                _create_execution_butler(
-                    wms_workflow_config,
-                    wms_workflow_config["runQgraphFile"],
-                    execution_butler_dir,
-                    wms_workflow_config["submitPath"],
-                )
     return wms_workflow_config, wms_workflow
 
 
