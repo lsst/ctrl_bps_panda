@@ -93,7 +93,6 @@ class PanDAService(BaseWmsService):
             _, max_copy_workers = self.config.search(
                 "maxCopyWorkers", opt={"default": PANDA_DEFAULT_MAX_COPY_WORKERS}
             )
-            # Docstring inherited from BaseWmsService.submit.
             file_distribution_uri = self.config["fileDistributionEndPoint"]
             lsst_temp = "LSST_RUN_TEMP_SPACE"
             if lsst_temp in file_distribution_uri and lsst_temp not in os.environ:
@@ -105,7 +104,7 @@ class PanDAService(BaseWmsService):
                     ResourcePath(file_distribution_uri, forceDirectory=True),
                     max_copy_workers,
                 )
-            #'''
+
             idds_client = get_idds_client(self.config)
             ret = idds_client.submit(workflow.idds_client_workflow, username=None, use_dataset_name=False)
             _LOG.debug("iDDS client manager submit returned = %s", ret)
@@ -119,7 +118,6 @@ class PanDAService(BaseWmsService):
 
             _LOG.info("Submitted into iDDs with request id=%s", request_id)
             workflow.run_id = request_id
-            #'''
 
     def restart(self, wms_workflow_id):
         # Docstring inherited from BaseWmsService.restart.
