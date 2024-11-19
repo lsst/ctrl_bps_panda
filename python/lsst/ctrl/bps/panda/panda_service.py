@@ -373,11 +373,15 @@ class PandaBpsWmsWorkflow(BaseWmsWorkflow):
         super().__init__(name, config)
         self.files_to_pre_stage = {}  # src, dest
         self.idds_client_workflow = IDDS_client_workflow(name=name)
+        self.run_attrs = {}
 
     @classmethod
     def from_generic_workflow(cls, config, generic_workflow, out_prefix, service_class):
         # Docstring inherited from BaseWmsWorkflow.from_generic_workflow.
         wms_workflow = cls(generic_workflow.name, config)
+
+        if generic_workflow.run_attrs:
+            wms_workflow.run_attrs.update(generic_workflow.run_attrs)
 
         files, dag_sink_work, task_count = add_idds_work(
             config, generic_workflow, wms_workflow.idds_client_workflow
