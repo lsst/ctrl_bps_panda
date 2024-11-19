@@ -107,10 +107,7 @@ class PanDAService(BaseWmsService):
                 )
             #'''
             idds_client = get_idds_client(self.config)
-            ret = idds_client.submit(
-                      workflow.idds_client_workflow,
-                      username=None,
-                      use_dataset_name=False)
+            ret = idds_client.submit(workflow.idds_client_workflow, username=None, use_dataset_name=False)
             _LOG.debug("iDDS client manager submit returned = %s", ret)
 
             # Check submission success
@@ -118,9 +115,7 @@ class PanDAService(BaseWmsService):
             if status:
                 request_id = int(result)
             else:
-                raise RuntimeError(
-                         f"Error submitting to PanDA service: {error}"
-                      )
+                raise RuntimeError(f"Error submitting to PanDA service: {error}")
 
             _LOG.info("Submitted into iDDs with request id=%s", request_id)
             workflow.run_id = request_id
