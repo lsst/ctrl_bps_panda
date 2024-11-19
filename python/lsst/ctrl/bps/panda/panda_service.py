@@ -68,7 +68,6 @@ class PanDAService(BaseWmsService):
     def submit(self, workflow, **kwargs):
         config = kwargs["config"] if "config" in kwargs else None
         remote_build = kwargs["remote_build"] if "remote_build" in kwargs else None
-        _, submit_cmd = config.search("submitCmd", opt={"default": False})
 
         if config and remote_build:
             _LOG.info("remote build")
@@ -98,6 +97,7 @@ class PanDAService(BaseWmsService):
             if lsst_temp in file_distribution_uri and lsst_temp not in os.environ:
                 file_distribution_uri = self.config["fileDistributionEndPointDefault"]
 
+            submit_cmd = workflow.run_attrs.get("bps_iscustom", False)
             if not submit_cmd:
                 copy_files_for_distribution(
                     workflow.files_to_pre_stage,

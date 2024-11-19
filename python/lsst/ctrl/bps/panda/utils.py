@@ -332,7 +332,7 @@ def _make_doma_work(
         if gwfile.job_access_remote:
             direct_io_files.add(gwfile.name)
 
-    _, submit_cmd = config.search("submitCmd", opt={"default": False})
+    submit_cmd = generic_workflow.run_attrs.get("bps_iscustom", False)
 
     if not direct_io_files:
         if submit_cmd:
@@ -562,9 +562,6 @@ def add_idds_work(config, generic_workflow, idds_workflow):
     RuntimeError
         If cannot recover from dependency issues after pass through workflow.
     """
-    # custom job
-    _, submit_cmd = config.search("submitCmd", opt={"default": False})
-
     # event service
     _, enable_event_service = config.search("enableEventService", opt={"default": None})
     _, max_payloads_per_panda_job = config.search(
@@ -587,6 +584,7 @@ def add_idds_work(config, generic_workflow, idds_workflow):
     task_count = 0  # Task number/ID in idds workflow used for unique name
     remote_filename = None
 
+    submit_cmd = generic_workflow.run_attrs.get("bps_iscustom", False)
     if submit_cmd:
         files = []
         _, script = config["customJob"].search("executable", opt={"default": ""})
@@ -781,6 +779,7 @@ def copy_files_to_pandacache(filename):
     filename = os.path.join(cache_path, filename)
     return filename
 
+
 def download_extract_archive(filename):
     """Download and extract the tarball from pandacache.
 
@@ -818,6 +817,7 @@ def download_extract_archive(filename):
     print(f"Extract {full_output_filename} to {target_dir}")
     os.remove(full_output_filename)
     print(f"Remove {full_output_filename}")
+
 
 def get_task_parameter(config, remote_build, key):
     search_opt = {"replaceVars": True, "expandEnvVars": False, "replaceEnvVars": False, "required": False}
