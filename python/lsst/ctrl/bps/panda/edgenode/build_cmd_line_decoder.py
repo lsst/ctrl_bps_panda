@@ -15,10 +15,9 @@ import sys
 from lsst.ctrl.bps.constants import DEFAULT_MEM_FMT, DEFAULT_MEM_UNIT
 from lsst.ctrl.bps.drivers import prepare_driver
 from lsst.ctrl.bps.panda.constants import PANDA_DEFAULT_MAX_COPY_WORKERS
-from lsst.ctrl.bps.panda.utils import copy_files_for_distribution, get_idds_client
+from lsst.ctrl.bps.panda.utils import copy_files_for_distribution, download_extract_archive, get_idds_client
 from lsst.resources import ResourcePath
 from lsst.utils.timer import time_this
-from lsst.ctrl.bps.panda.utils import download_extract_archive
 
 logging.basicConfig(
     stream=sys.stdout,
