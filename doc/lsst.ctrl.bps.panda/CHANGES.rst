@@ -1,3 +1,20 @@
+lsst-ctrl-bps-panda v28.0.0 (2024-11-21)
+========================================
+
+New Features
+------------
+
+- Updated to support event service which allows multiple short payload jobs to run in a single PanDA job for efficiency. (`DM-38177 <https://rubinobs.atlassian.net/browse/DM-38177>`_)
+
+
+Other Changes and Additions
+---------------------------
+
+- Removed ``requestMemory``, ``memoryMultipler`` and ``numberOfRetries`` from since those are now defined in ``ctrl_bps`` (`DM-44513 <https://rubinobs.atlassian.net/browse/DM-44513>`_)
+- Fixed ``pandaDistributionEndpoint`` to support different protocols (`DM-45631 <https://rubinobs.atlassian.net/browse/DM-45631>`_)
+- Removed support for execution butler for remote job submission (`DM-46845 <https://rubinobs.atlassian.net/browse/DM-46845>`_)
+
+
 lsst-ctrl-bps-panda v27.0.0 (2024-06-04)
 ========================================
 
