@@ -83,7 +83,7 @@ See `bps submitcmd`_ for details.
 To execute custom scripts you need to specify the version of the LSST Stack to
 use *and* include the settings from
 ``${CTRL_BPS_PANDA_DIR}/config/bps_panda_DF.yaml`` and
-``${CTRL_BPS_PANDA_DIR}/config/bps_cmd.yaml`` in your BPS config.
+``${CTRL_BPS_PANDA_DIR}/config/bps_panda_cmd.yaml`` in your BPS config.
 
 .. code-block:: yaml
 
@@ -91,7 +91,7 @@ use *and* include the settings from
 
    includeConfigs:
      - ${CTRL_BPS_PANDA_DIR}/config/bps_panda_DF.yaml
-     - ${CTRL_BPS_PANDA_DIR}/config/bps_cmd.yaml
+     - ${CTRL_BPS_PANDA_DIR}/config/bps_panda_cmd.yaml
 
    customJob:
      executable: <executable>
