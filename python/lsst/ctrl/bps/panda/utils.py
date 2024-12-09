@@ -780,16 +780,19 @@ def copy_files_to_pandacache(filename):
     return filename
 
 
-def download_extract_archive(filename):
+def download_extract_archive(filename, prefix=None):
     """Download and extract the tarball from pandacache.
 
     Parameters
     ----------
     filename : `str`
         The filename to download.
+    prefix : `str`, optional
+        The target directory the tarball will be downloaded and extracted to.
+        If None (default), the current directory will be used.
     """
     archive_basename = os.path.basename(filename)
-    target_dir = os.getcwd()
+    target_dir = prefix if prefix is not None else os.getcwd()
     full_output_filename = os.path.join(target_dir, archive_basename)
 
     if filename.startswith("https:"):
