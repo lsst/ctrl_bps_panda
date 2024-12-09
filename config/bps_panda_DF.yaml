@@ -10,10 +10,6 @@ s3EndpointUrl: "https://storage.googleapis.com"
 payloadFolder: payload
 fileDistributionEndPoint: "${LSST_RUN_TEMP_SPACE}/panda_cache_box/{payloadFolder}/{uniqProcName}/"
 
-# location of main butler repo at USDF
-payload:
-  butlerConfig: panda-test-med-1
-
 # Job environment setup
 custom_lsst_setup: ""
 setupLSSTEnv: >
