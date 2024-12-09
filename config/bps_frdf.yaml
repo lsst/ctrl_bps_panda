@@ -9,8 +9,8 @@ computeCloud: EU
 computeSite: CC-IN2P3
 s3EndpointUrl: "https://storage.googleapis.com"
 payloadFolder: payload
-fileDistributionEndPoint: "file://${LSST_RUN_TEMP_SPACE}/{operator}/panda_cache_box/{payloadFolder}/{uniqProcName}/"
-fileDistributionEndPointDefault: "file:///sps/lsst/users/lsstgrid/{operator}/panda_cache_box/{payloadFolder}/{uniqProcName}/"
+fileDistributionEndPoint: "file://${LSST_RUN_TEMP_SPACE}/panda_cache_box/{payloadFolder}/{uniqProcName}/"
+fileDistributionEndPointDefault: "file:///sps/lsst/users/lsstgrid/panda_cache_box/{payloadFolder}/{uniqProcName}/"
 
 # location of main butler repo at USDF
 payload:
