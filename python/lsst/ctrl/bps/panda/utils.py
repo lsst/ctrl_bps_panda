@@ -803,6 +803,8 @@ def download_extract_archive(filename, prefix=None):
     panda_cache_url = os.environ.get("PANDACACHE_URL", None)
     print(f"PANDACACHE_URL: {panda_cache_url}")
 
+    # The import of PanDA client must happen *after* the PANDACACHE_URL is set.
+    # Otherwise, the PanDA client the environment setting will not be parsed.
     from pandaclient import Client
 
     attempt = 0
