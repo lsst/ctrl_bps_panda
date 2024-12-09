@@ -39,7 +39,9 @@ import binascii
 import concurrent.futures
 import logging
 import os
+import random
 import tarfile
+import time
 import uuid
 
 import idds.common.utils as idds_utils
@@ -809,11 +811,17 @@ def download_extract_archive(filename, prefix=None):
 
     attempt = 0
     max_attempts = 3
-    done = False
-    while attempt < max_attempts and not done:
+    while attempt < max_attempts:
         status, output = Client.getFile(archive_basename, output_path=full_output_filename)
         if status == 0:
-            done = True
+            break
+        if attempt <= 1:
+            secs = random.randint(1, 10)
+        elif attempt <= 2:
+            secs = random.randint(1, 60)
+        else:
+            secs = random.randint(1, 120)
+        time.sleep(secs)
     print(f"Download archive file from pandacache status: {status}, output: {output}")
     if status != 0:
         raise RuntimeError("Failed to download archive file from pandacache")
