@@ -38,7 +38,7 @@ Defining a submission
 BPS configuration files are YAML files with some reserved keywords and some
 special features. See `BPS configuration file`__ for details.
 
-.. Describe any plugin specific ascpects of a definiing a submissinon below if
+.. Describe any plugin specific aspects of a definiing a submission below if
    any.
 
 The memory autoscaling is *not* supported supported by the ``ctrl_bps_panda``, i.e.,
@@ -56,7 +56,7 @@ will have not effect on workflows submitted with this plugin.
 Authenticating
 --------------
 
-.. Describe any plugin specific ascpects of a authentication below if any.
+.. Describe any plugin specific aspects of a authentication below if any.
 
 See https://panda.lsst.io for details.
 
@@ -67,7 +67,7 @@ Submitting a run
 
 See `bps submit`_ and https://panda.lsst.io for details.
 
-.. Describe any plugin specific ascpects of a submissinon below if any.
+.. Describe any plugin specific aspects of a submission below if any.
 
 .. __: https://pipelines.lsst.io/v/weekly/modules/lsst.ctrl.bps/quickstart.html#submitting-a-run
 
@@ -78,7 +78,7 @@ Submitting a custom script
 
 See `bps submitcmd`_ for details.
 
-.. Describe any plugin specific ascpects of a submissinon below if any.
+.. Describe any plugin specific aspects of a submission below if any.
 
 To execute custom scripts you need to specify the version of the LSST Stack to
 use *and* include the settings from
@@ -118,7 +118,7 @@ Checking status
 
 `bps report`_ is *not* supported, use the WMS commands/tools directly.
 
-.. Describe any plugin specific ascpects of a checking submission status below
+.. Describe any plugin specific aspects of a checking submission status below
    if any.
 
 .. _panda-plugin-cancelling:
@@ -128,7 +128,7 @@ Canceling submitted jobs
 
 `bps cancel`_ is *not* supported, use the WMS commands/tools directly.
 
-.. Describe any plugin specific ascpects of a canceling submitted jobs below
+.. Describe any plugin specific aspects of a canceling submitted jobs below
    if any.
 
 .. _panda-plugin-restarting:
@@ -138,7 +138,7 @@ Restarting a failed run
 
 `bps restart`_ is *not* supported, use the WMS commands/tools directly.
 
-.. Describe any plugin specific ascpects of restarting a failed jobs below
+.. Describe any plugin specific aspects of restarting a failed jobs below
    if any.
 
 .. .. _panda-plugin-troubleshooting:
