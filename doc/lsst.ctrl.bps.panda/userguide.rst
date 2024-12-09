@@ -81,7 +81,7 @@ See `bps submitcmd`_ for details.
 .. Describe any plugin specific aspects of a submission below if any.
 
 To execute custom scripts you need to specify the version of the LSST Stack to
-use *and* include the settings from
+use and include the settings from
 ``${CTRL_BPS_PANDA_DIR}/config/bps_panda_DF.yaml`` and
 ``${CTRL_BPS_PANDA_DIR}/config/bps_panda_cmd.yaml`` in your BPS config.
 
@@ -110,6 +110,12 @@ script to be executed at FrDF (CC-IN2P3), set ``computeSite`` and
    computeCloud: "EU"
 
 To execute the script in UKDF, set ``computeSite`` to ``LANCS``.
+
+.. note::
+
+   Alternatively, you can include ``bps_panda_frdf.yaml`` or
+   ``bps_panda_ukdf.yaml`` instead of the ``bps_panda_DF.yaml`` which will set
+   the right ``computeSite`` (and ``computeCloud``) for you.
 
 .. _panda-plugin-status:
 
