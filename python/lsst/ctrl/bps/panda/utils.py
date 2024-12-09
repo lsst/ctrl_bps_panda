@@ -588,9 +588,7 @@ def add_idds_work(config, generic_workflow, idds_workflow):
 
     submit_cmd = generic_workflow.run_attrs.get("bps_iscustom", False)
     if submit_cmd:
-        files = []
-        _, script = config["customJob"].search("executable", opt={"default": ""})
-        files.append(script)
+        files = generic_workflow.get_executables(data=False, transfer_only=True)
         submit_path = config["submitPath"]
         archive_filename = f"jobO.{uuid.uuid4()}.tar.gz"
         archive_filename = create_archive_file(submit_path, archive_filename, files)
