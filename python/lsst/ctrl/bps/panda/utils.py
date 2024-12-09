@@ -582,7 +582,7 @@ def add_idds_work(config, generic_workflow, idds_workflow):
     job_to_task = {}
     job_to_pseudo_filename = {}
     task_count = 0  # Task number/ID in idds workflow used for unique name
-    remote_filename = None
+    remote_archive_filename = None
 
     submit_cmd = generic_workflow.run_attrs.get("bps_iscustom", False)
     if submit_cmd:
@@ -592,7 +592,7 @@ def add_idds_work(config, generic_workflow, idds_workflow):
         submit_path = config["submitPath"]
         archive_filename = f"jobO.{uuid.uuid4()}.tar.gz"
         archive_filename = create_archive_file(submit_path, archive_filename, files)
-        remote_filename = copy_files_to_pandacache(archive_filename)
+        remote_archive_filename = copy_files_to_pandacache(archive_filename)
 
     es_files = {}
     name_works = {}
@@ -668,7 +668,7 @@ def add_idds_work(config, generic_workflow, idds_workflow):
                     es_label=job_label,
                     max_payloads_per_panda_job=max_payloads_per_panda_job,
                     max_wms_job_wall_time=max_wms_job_wall_time,
-                    remote_filename=remote_filename,
+                    remote_filename=remote_archive_filename,
                 )
                 name_works[work.task_name] = work
                 files_to_pre_stage.update(files)
