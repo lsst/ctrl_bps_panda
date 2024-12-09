@@ -825,9 +825,9 @@ def download_extract_archive(filename, prefix=None):
         raise RuntimeError("Failed to download archive file from pandacache")
     with tarfile.open(full_output_filename, "r:gz") as f:
         f.extractall(target_dir)
-    print(f"Extract {full_output_filename} to {target_dir}")
+    print(f"Extracted {full_output_filename} to {target_dir}")
     os.remove(full_output_filename)
-    print(f"Remove {full_output_filename}")
+    print(f"Removed {full_output_filename}")
 
 
 def get_task_parameter(config, remote_build, key):
