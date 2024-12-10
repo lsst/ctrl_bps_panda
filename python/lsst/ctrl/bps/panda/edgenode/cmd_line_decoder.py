@@ -40,6 +40,7 @@ import os
 import re
 import sys
 
+from lsst.ctrl.bps.panda.utils import download_extract_archive
 from lsst.resources import ResourcePath
 
 
@@ -139,6 +140,14 @@ def deliver_input_files(src_path, files, skip_copy):
     """
     files = files.split("+")
     src_uri = ResourcePath(src_path, forceDirectory=True)
+
+    if "jobO" in skip_copy:
+        download_extract_archive(skip_copy)
+        for script in files:
+            file_name_placeholder, file_pfn = script.split(":")
+            os.chmod(file_pfn, 0o755)
+        return
+
     for file in files:
         file_name_placeholder, file_pfn = file.split(":")
         if file_name_placeholder not in skip_copy.split("+"):

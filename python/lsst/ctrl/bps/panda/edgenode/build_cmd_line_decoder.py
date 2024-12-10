@@ -11,12 +11,11 @@ import datetime
 import logging
 import os
 import sys
-import tarfile
 
 from lsst.ctrl.bps.constants import DEFAULT_MEM_FMT, DEFAULT_MEM_UNIT
 from lsst.ctrl.bps.drivers import prepare_driver
 from lsst.ctrl.bps.panda.constants import PANDA_DEFAULT_MAX_COPY_WORKERS
-from lsst.ctrl.bps.panda.utils import copy_files_for_distribution, get_idds_client
+from lsst.ctrl.bps.panda.utils import copy_files_for_distribution, download_extract_archive, get_idds_client
 from lsst.resources import ResourcePath
 from lsst.utils.timer import time_this
 
@@ -27,45 +26,6 @@ logging.basicConfig(
 )
 
 _LOG = logging.getLogger(__name__)
-
-
-def download_extract_archive(filename):
-    """Download and extract the tarball from pandacache.
-
-    Parameters
-    ----------
-    filename : `str`
-        The filename to download.
-    """
-    archive_basename = os.path.basename(filename)
-    target_dir = os.getcwd()
-    full_output_filename = os.path.join(target_dir, archive_basename)
-
-    if filename.startswith("https:"):
-        panda_cache_url = os.path.dirname(os.path.dirname(filename))
-        os.environ["PANDACACHE_URL"] = panda_cache_url
-    elif "PANDACACHE_URL" not in os.environ and "PANDA_URL_SSL" in os.environ:
-        os.environ["PANDACACHE_URL"] = os.environ["PANDA_URL_SSL"]
-    panda_cache_url = os.environ.get("PANDACACHE_URL", None)
-    print(f"PANDACACHE_URL: {panda_cache_url}")
-
-    from pandaclient import Client
-
-    attempt = 0
-    max_attempts = 3
-    done = False
-    while attempt < max_attempts and not done:
-        status, output = Client.getFile(archive_basename, output_path=full_output_filename)
-        if status == 0:
-            done = True
-    print(f"Download archive file from pandacache status: {status}, output: {output}")
-    if status != 0:
-        raise RuntimeError("Failed to download archive file from pandacache")
-    with tarfile.open(full_output_filename, "r:gz") as f:
-        f.extractall(target_dir)
-    print(f"Extract {full_output_filename} to {target_dir}")
-    os.remove(full_output_filename)
-    print(f"Remove {full_output_filename}")
 
 
 def create_idds_workflow(config_file, compute_site):

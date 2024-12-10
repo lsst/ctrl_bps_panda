@@ -39,7 +39,9 @@ import binascii
 import concurrent.futures
 import logging
 import os
+import random
 import tarfile
+import time
 import uuid
 
 import idds.common.utils as idds_utils
@@ -222,6 +224,7 @@ def _make_doma_work(
     es_label=None,
     max_payloads_per_panda_job=PANDA_DEFAULT_MAX_PAYLOADS_PER_PANDA_JOB,
     max_wms_job_wall_time=None,
+    remote_filename=None,
 ):
     """Make the DOMA Work object for a PanDA task.
 
@@ -331,12 +334,19 @@ def _make_doma_work(
         if gwfile.job_access_remote:
             direct_io_files.add(gwfile.name)
 
+    submit_cmd = generic_workflow.run_attrs.get("bps_iscustom", False)
+
     if not direct_io_files:
-        direct_io_files.add("cmdlineplaceholder")
+        if submit_cmd:
+            direct_io_files.add(remote_filename)
+        else:
+            direct_io_files.add("cmdlineplaceholder")
 
     lsst_temp = "LSST_RUN_TEMP_SPACE"
     if lsst_temp in file_distribution_end_point and lsst_temp not in os.environ:
         file_distribution_end_point = file_distribution_end_point_default
+    if submit_cmd and not file_distribution_end_point:
+        file_distribution_end_point = "FileDistribution"
 
     executable = add_decoder_prefix(
         config, cmd_line, file_distribution_end_point, (local_pfns, direct_io_files)
@@ -574,6 +584,15 @@ def add_idds_work(config, generic_workflow, idds_workflow):
     job_to_task = {}
     job_to_pseudo_filename = {}
     task_count = 0  # Task number/ID in idds workflow used for unique name
+    remote_archive_filename = None
+
+    submit_cmd = generic_workflow.run_attrs.get("bps_iscustom", False)
+    if submit_cmd:
+        files = generic_workflow.get_executables(data=False, transfer_only=True)
+        submit_path = config["submitPath"]
+        archive_filename = f"jobO.{uuid.uuid4()}.tar.gz"
+        archive_filename = create_archive_file(submit_path, archive_filename, files)
+        remote_archive_filename = copy_files_to_pandacache(archive_filename)
 
     es_files = {}
     name_works = {}
@@ -649,6 +668,7 @@ def add_idds_work(config, generic_workflow, idds_workflow):
                     es_label=job_label,
                     max_payloads_per_panda_job=max_payloads_per_panda_job,
                     max_wms_job_wall_time=max_wms_job_wall_time,
+                    remote_filename=remote_archive_filename,
                 )
                 name_works[work.task_name] = work
                 files_to_pre_stage.update(files)
@@ -758,6 +778,56 @@ def copy_files_to_pandacache(filename):
     cache_path = os.path.join(os.environ["PANDACACHE_URL"], "cache")
     filename = os.path.join(cache_path, filename)
     return filename
+
+
+def download_extract_archive(filename, prefix=None):
+    """Download and extract the tarball from pandacache.
+
+    Parameters
+    ----------
+    filename : `str`
+        The filename to download.
+    prefix : `str`, optional
+        The target directory the tarball will be downloaded and extracted to.
+        If None (default), the current directory will be used.
+    """
+    archive_basename = os.path.basename(filename)
+    target_dir = prefix if prefix is not None else os.getcwd()
+    full_output_filename = os.path.join(target_dir, archive_basename)
+
+    if filename.startswith("https:"):
+        panda_cache_url = os.path.dirname(os.path.dirname(filename))
+        os.environ["PANDACACHE_URL"] = panda_cache_url
+    elif "PANDACACHE_URL" not in os.environ and "PANDA_URL_SSL" in os.environ:
+        os.environ["PANDACACHE_URL"] = os.environ["PANDA_URL_SSL"]
+    panda_cache_url = os.environ.get("PANDACACHE_URL", None)
+    print(f"PANDACACHE_URL: {panda_cache_url}")
+
+    # The import of PanDA client must happen *after* the PANDACACHE_URL is set.
+    # Otherwise, the PanDA client the environment setting will not be parsed.
+    from pandaclient import Client
+
+    attempt = 0
+    max_attempts = 3
+    while attempt < max_attempts:
+        status, output = Client.getFile(archive_basename, output_path=full_output_filename)
+        if status == 0:
+            break
+        if attempt <= 1:
+            secs = random.randint(1, 10)
+        elif attempt <= 2:
+            secs = random.randint(1, 60)
+        else:
+            secs = random.randint(1, 120)
+        time.sleep(secs)
+    print(f"Download archive file from pandacache status: {status}, output: {output}")
+    if status != 0:
+        raise RuntimeError("Failed to download archive file from pandacache")
+    with tarfile.open(full_output_filename, "r:gz") as f:
+        f.extractall(target_dir)
+    print(f"Extracted {full_output_filename} to {target_dir}")
+    os.remove(full_output_filename)
+    print(f"Removed {full_output_filename}")
 
 
 def get_task_parameter(config, remote_build, key):

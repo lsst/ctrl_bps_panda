@@ -87,20 +87,23 @@ class PanDAService(BaseWmsService):
             _LOG.info("Submitted into iDDs with request id=%s", request_id)
             idds_build_workflow.run_id = request_id
             return idds_build_workflow
+
         else:
             _, max_copy_workers = self.config.search(
                 "maxCopyWorkers", opt={"default": PANDA_DEFAULT_MAX_COPY_WORKERS}
             )
-            # Docstring inherited from BaseWmsService.submit.
             file_distribution_uri = self.config["fileDistributionEndPoint"]
             lsst_temp = "LSST_RUN_TEMP_SPACE"
             if lsst_temp in file_distribution_uri and lsst_temp not in os.environ:
                 file_distribution_uri = self.config["fileDistributionEndPointDefault"]
-            copy_files_for_distribution(
-                workflow.files_to_pre_stage,
-                ResourcePath(file_distribution_uri, forceDirectory=True),
-                max_copy_workers,
-            )
+
+            submit_cmd = workflow.run_attrs.get("bps_iscustom", False)
+            if not submit_cmd:
+                copy_files_for_distribution(
+                    workflow.files_to_pre_stage,
+                    ResourcePath(file_distribution_uri, forceDirectory=True),
+                    max_copy_workers,
+                )
 
             idds_client = get_idds_client(self.config)
             ret = idds_client.submit(workflow.idds_client_workflow, username=None, use_dataset_name=False)
@@ -370,11 +373,15 @@ class PandaBpsWmsWorkflow(BaseWmsWorkflow):
         super().__init__(name, config)
         self.files_to_pre_stage = {}  # src, dest
         self.idds_client_workflow = IDDS_client_workflow(name=name)
+        self.run_attrs = {}
 
     @classmethod
     def from_generic_workflow(cls, config, generic_workflow, out_prefix, service_class):
         # Docstring inherited from BaseWmsWorkflow.from_generic_workflow.
         wms_workflow = cls(generic_workflow.name, config)
+
+        if generic_workflow.run_attrs:
+            wms_workflow.run_attrs.update(generic_workflow.run_attrs)
 
         files, dag_sink_work, task_count = add_idds_work(
             config, generic_workflow, wms_workflow.idds_client_workflow
