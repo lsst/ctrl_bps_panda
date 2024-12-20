@@ -250,9 +250,16 @@ def _make_doma_work(
     cvals = {"curr_cluster": gwjob.label}
     _, site = config.search("computeSite", opt={"curvals": cvals, "required": True})
     cvals["curr_site"] = site
+    cvals["curr_pipetask"] = gwjob.label
     _, processing_type = config.search(
-        "processing_type", opt={"curvals": cvals, "default": PANDA_DEFAULT_PROCESSING_TYPE}
+        "processingType", opt={"curvals": cvals, "default": PANDA_DEFAULT_PROCESSING_TYPE}
     )
+    if gwjob.label in ["finalJob", "customJob"]:
+        _, nonpipetask = config.search(gwjob.label)
+        default_type = "merge"
+        if gwjob.label == "customJob":
+            default_type = PANDA_DEFAULT_PROCESSING_TYPE
+        processing_type = nonpipetask["processingType"] if nonpipetask["processingType"] else default_type
     _, task_type = config.search("taskType", opt={"curvals": cvals, "default": PANDA_DEFAULT_TASK_TYPE})
     _, prod_source_label = config.search(
         "prodSourceLabel", opt={"curvals": cvals, "default": PANDA_DEFAULT_PROD_SOURCE_LABEL}
@@ -868,6 +875,7 @@ def create_idds_build_workflow(**kwargs):
     task_queue = get_task_parameter(config, remote_build, "queue")
     task_rss = get_task_parameter(config, remote_build, "requestMemory")
     nretries = get_task_parameter(config, remote_build, "numberOfRetries")
+    processing_type = get_task_parameter(config, remote_build, "processingType")
     _LOG.info("requestMemory: %s", task_rss)
     _LOG.info("Site: %s", task_site)
     # _LOG.info("executable: %s", executable)
@@ -883,6 +891,7 @@ def create_idds_build_workflow(**kwargs):
         task_queue=task_queue,
         encode_command_line=True,
         prodSourceLabel="managed",
+        processing_type=processing_type,
         task_log={
             "dataset": "PandaJob_#{pandaid}/",
             "destination": "local",

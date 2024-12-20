@@ -1,0 +1,1 @@
+Fixed the passing of processing_type to different jobs
