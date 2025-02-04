@@ -25,8 +25,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Unit tests for ctrl_bps_panda utilities.
-"""
+"""Unit tests for ctrl_bps_panda utilities."""
 import unittest
 
 from lsst.ctrl.bps import GenericWorkflowExec, GenericWorkflowJob

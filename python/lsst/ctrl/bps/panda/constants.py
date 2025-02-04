@@ -24,8 +24,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-"""Symbolic constants.
-"""
+"""Symbolic constants."""
 
 PANDA_DEFAULT_PROD_SOURCE_LABEL = "managed"
 PANDA_DEFAULT_PROCESSING_TYPE = None

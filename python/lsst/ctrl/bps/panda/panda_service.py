@@ -24,8 +24,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-"""Interface between generic workflow to PanDA/iDDS workflow system.
-"""
+"""Interface between generic workflow to PanDA/iDDS workflow system."""
 
 
 __all__ = ["PanDAService", "PandaBpsWmsWorkflow"]
