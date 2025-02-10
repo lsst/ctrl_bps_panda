@@ -31,7 +31,6 @@ Driver functions ensure that ensure all setup work is done before running
 the subcommand method.
 """
 
-
 __all__ = [
     "panda_auth_clean_driver",
     "panda_auth_reset_driver",

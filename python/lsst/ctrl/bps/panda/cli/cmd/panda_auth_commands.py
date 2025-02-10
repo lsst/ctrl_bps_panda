@@ -27,13 +27,14 @@
 """Subcommand definitions for the PanDA auth commands."""
 
 __all__ = [
-    "status",
-    "reset",
     "clean",
+    "reset",
+    "status",
 ]
 
 
 import click
+
 from lsst.daf.butler.cli.utils import MWCommand
 
 from ...panda_auth_drivers import panda_auth_clean_driver, panda_auth_reset_driver, panda_auth_status_driver

@@ -26,7 +26,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """Interface between generic workflow to PanDA/iDDS workflow system."""
 
-
 __all__ = ["PanDAService", "PandaBpsWmsWorkflow"]
 
 
@@ -37,6 +36,7 @@ import pickle
 import re
 
 from idds.workflowv2.workflow import Workflow as IDDS_client_workflow
+
 from lsst.ctrl.bps import BaseWmsService, BaseWmsWorkflow, WmsRunReport, WmsStates
 from lsst.ctrl.bps.panda.constants import PANDA_DEFAULT_MAX_COPY_WORKERS
 from lsst.ctrl.bps.panda.utils import (

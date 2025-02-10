@@ -28,11 +28,11 @@
 """Utilities for bps PanDA plugin."""
 
 __all__ = [
+    "add_decoder_prefix",
+    "convert_exec_string_to_hex",
     "copy_files_for_distribution",
     "get_idds_client",
     "get_idds_result",
-    "convert_exec_string_to_hex",
-    "add_decoder_prefix",
 ]
 
 import binascii
@@ -50,6 +50,7 @@ from idds.doma.workflowv2.domapandawork import DomaPanDAWork
 from idds.doma.workflowv2.domatree import DomaTree
 from idds.workflowv2.workflow import AndCondition
 from idds.workflowv2.workflow import Workflow as IDDS_client_workflow
+
 from lsst.ctrl.bps import BpsConfig, GenericWorkflow, GenericWorkflowJob
 from lsst.ctrl.bps.panda.cmd_line_embedder import CommandLineEmbedder
 from lsst.ctrl.bps.panda.constants import (
@@ -220,7 +221,7 @@ def _make_doma_work(
     task_count,
     task_chunk,
     enable_event_service=False,
-    es_files={},
+    es_files=None,
     es_label=None,
     max_payloads_per_panda_job=PANDA_DEFAULT_MAX_PAYLOADS_PER_PANDA_JOB,
     max_wms_job_wall_time=None,
@@ -246,6 +247,8 @@ def _make_doma_work(
     local_pfns : `dict` [`str`, `str`]
         Files which need to be copied to a workflow staging area.
     """
+    if es_files is None:
+        es_files = {}
     _LOG.debug("Using gwjob %s to create new PanDA task (gwjob=%s)", gwjob.name, gwjob)
     cvals = {"curr_cluster": gwjob.label}
     _, site = config.search("computeSite", opt={"curvals": cvals, "required": True})
@@ -578,8 +581,7 @@ def add_idds_work(config, generic_workflow, idds_workflow):
     )
     _, max_wms_job_wall_time = config.search("maxWmsJobWalltime", opt={"default": None})
     my_log = (
-        f"enableEventService: {enable_event_service}, "
-        f"maxPayloadsPerPandaJob: {max_payloads_per_panda_job}"
+        f"enableEventService: {enable_event_service}, maxPayloadsPerPandaJob: {max_payloads_per_panda_job}"
     )
     _LOG.info(my_log)
 

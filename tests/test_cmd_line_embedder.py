@@ -26,6 +26,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """Unit tests for cmd_line_embedder.py."""
+
 import unittest
 
 from lsst.ctrl.bps import GenericWorkflowFile
