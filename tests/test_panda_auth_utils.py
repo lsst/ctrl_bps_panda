@@ -26,6 +26,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """Unit tests for PanDA authentication utilities."""
+
 import os
 import unittest
 from unittest import mock

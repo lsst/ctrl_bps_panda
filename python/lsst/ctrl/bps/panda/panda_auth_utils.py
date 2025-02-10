@@ -27,7 +27,6 @@
 
 """Functions for each panda_auth subcommand."""
 
-
 __all__ = [
     "panda_auth_clean",
     "panda_auth_expiration",
