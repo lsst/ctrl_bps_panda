@@ -50,6 +50,7 @@ from idds.doma.workflowv2.domapandawork import DomaPanDAWork
 from idds.doma.workflowv2.domatree import DomaTree
 from idds.workflowv2.workflow import AndCondition
 from idds.workflowv2.workflow import Workflow as IDDS_client_workflow
+
 from lsst.ctrl.bps import BpsConfig, GenericWorkflow, GenericWorkflowJob
 from lsst.ctrl.bps.panda.cmd_line_embedder import CommandLineEmbedder
 from lsst.ctrl.bps.panda.constants import (

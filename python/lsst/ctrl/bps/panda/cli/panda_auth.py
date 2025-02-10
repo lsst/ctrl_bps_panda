@@ -25,6 +25,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import click
+
 from lsst.daf.butler.cli.butler import LoaderCLI
 from lsst.daf.butler.cli.opt import (
     log_file_option,
