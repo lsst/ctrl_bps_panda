@@ -221,7 +221,7 @@ def _make_doma_work(
     task_count,
     task_chunk,
     enable_event_service=False,
-    es_files={},
+    es_files=None,
     es_label=None,
     max_payloads_per_panda_job=PANDA_DEFAULT_MAX_PAYLOADS_PER_PANDA_JOB,
     max_wms_job_wall_time=None,
@@ -247,6 +247,8 @@ def _make_doma_work(
     local_pfns : `dict` [`str`, `str`]
         Files which need to be copied to a workflow staging area.
     """
+    if es_files is None:
+        es_files = {}
     _LOG.debug("Using gwjob %s to create new PanDA task (gwjob=%s)", gwjob.name, gwjob)
     cvals = {"curr_cluster": gwjob.label}
     _, site = config.search("computeSite", opt={"curvals": cvals, "required": True})
