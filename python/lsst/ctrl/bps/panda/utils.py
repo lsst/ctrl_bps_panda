@@ -28,11 +28,11 @@
 """Utilities for bps PanDA plugin."""
 
 __all__ = [
+    "add_decoder_prefix",
+    "convert_exec_string_to_hex",
     "copy_files_for_distribution",
     "get_idds_client",
     "get_idds_result",
-    "convert_exec_string_to_hex",
-    "add_decoder_prefix",
 ]
 
 import binascii

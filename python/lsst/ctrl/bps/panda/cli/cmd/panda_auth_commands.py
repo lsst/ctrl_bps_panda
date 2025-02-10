@@ -27,9 +27,9 @@
 """Subcommand definitions for the PanDA auth commands."""
 
 __all__ = [
-    "status",
-    "reset",
     "clean",
+    "reset",
+    "status",
 ]
 
 
