@@ -2,7 +2,7 @@
 # To setup PanDA at USDF: source setup_lsst_panda.sh w_2023_38
 # If using PanDA at CERN: source setup_lsst_panda.sh w_2023_38 cern
 
-latest=$(ls -td /cvmfs/sw.lsst.eu/linux-x86_64/panda_env/v* | head -1)
+latest=$(ls -td /cvmfs/sw.lsst.eu/almalinux-x86_64/panda_env/v* | head -1)
 
 weekly=$1
 panda_ins=$2

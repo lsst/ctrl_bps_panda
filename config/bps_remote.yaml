@@ -3,7 +3,7 @@ remoteBuild:
   runnerCommand: >
     export SHELL=/bin/bash;
     unset PYTHONPATH;
-    source /cvmfs/sw.lsst.eu/linux-x86_64/lsst_distrib/{LSST_VERSION}/loadLSST.bash;
+    source /cvmfs/sw.lsst.eu/almalinux-x86_64/lsst_distrib/{LSST_VERSION}/loadLSST.bash;
     pwd;ls -al;
     setup lsst_distrib;
     echo "setup tokens";
