@@ -259,7 +259,7 @@ def _make_doma_work(
     )
     if gwjob.label in ["finalJob", "customJob"]:
         _, nonpipetask = config.search(gwjob.label)
-        default_type = "merge"
+        default_type = "Rubin_Merge"
         if gwjob.label == "customJob":
             default_type = PANDA_DEFAULT_PROCESSING_TYPE
         processing_type = nonpipetask["processingType"] if nonpipetask["processingType"] else default_type
