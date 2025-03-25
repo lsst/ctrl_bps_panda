@@ -1,1 +1,0 @@
-The changes were made to allow the plugin to execute jobs remotely without the necessity to use remote build approach.
