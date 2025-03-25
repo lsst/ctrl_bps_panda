@@ -1,3 +1,24 @@
+lsst-ctrl-bps-panda v29.0.0 (2025-03-25)
+========================================
+
+New Features
+------------
+
+- Modified to allow execution of jobs remotely without the necessity to use the remote build approach. (`DM-46307 <https://rubinobs.atlassian.net/browse/DM-46307>`_)
+
+
+Bug Fixes
+---------
+
+- Fixed the passing of processing_type to different jobs (`DM-47906 <https://rubinobs.atlassian.net/browse/DM-47906>`_)
+
+
+Other Changes and Additions
+---------------------------
+
+- Migrated configuration files to use the pipelines built for AlmaLinux (`DM-48967 <https://rubinobs.atlassian.net/browse/DM-48967>`_)
+
+
 lsst-ctrl-bps-panda v28.0.0 (2024-11-21)
 ========================================
 
