@@ -40,7 +40,7 @@ class TestPandaUtils(unittest.TestCase):
         # define enough of a job for this test
         myexec = GenericWorkflowExec("test_exec")
         myexec.src_uri = "/dummy/path/test_exec"
-        gwjob = GenericWorkflowJob("j" * 4005)
+        gwjob = GenericWorkflowJob("j" * 4005, "label1")
         gwjob.executable = myexec
         gwjob.arguments = ""
         name = _make_pseudo_filename({}, gwjob)
