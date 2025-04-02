@@ -298,8 +298,18 @@ def _make_doma_work(
         generic_workflow.get_job_outputs(gwjob.name),
     )
 
+    job_env = ""
+    if gwjob.environment:
+        for key, value in gwjob.environment.items():
+            try:
+                sub_value = value.format_map(gwjob.cmdvals)
+            except (KeyError, TypeError) as exc:
+                _LOG.error("Could not replace command variables: replacement for %s not provided", str(exc))
+                raise
+            job_env += f"export {key}={sub_value}; "
+
     cmd_line, _ = cmd_line_embedder.substitute_command_line(
-        job_executable + " " + gwjob.arguments,
+        job_env + job_executable + " " + gwjob.arguments,
         gwjob.cmdvals,
         gwjob.name,
         generic_workflow.get_job_inputs(gwjob.name) + generic_workflow.get_job_outputs(gwjob.name),
