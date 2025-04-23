@@ -60,6 +60,7 @@ from lsst.ctrl.bps.panda.constants import (
     PANDA_DEFAULT_MAX_JOBS_PER_TASK,
     PANDA_DEFAULT_MAX_PAYLOADS_PER_PANDA_JOB,
     PANDA_DEFAULT_MAX_WALLTIME,
+    PANDA_DEFAULT_NAME_LENGTH,
     PANDA_DEFAULT_ORDER_ID_MAP_FILE,
     PANDA_DEFAULT_PRIORITY,
     PANDA_DEFAULT_PROCESSING_TYPE,
@@ -876,6 +877,10 @@ def create_idds_build_workflow(**kwargs):
     search_opt = {"replaceVars": True, "expandEnvVars": False, "replaceEnvVars": False, "required": False}
     cvals = {"LSST_VERSION": get_task_parameter(config, remote_build, "LSST_VERSION")}
     cvals["custom_lsst_setup"] = get_task_parameter(config, remote_build, "custom_lsst_setup")
+    max_name_length = PANDA_DEFAULT_NAME_LENGTH
+    if "IDDS_MAX_NAME_LENGTH" in os.environ:
+        max_name_length = int(os.environ["IDDS_MAX_NAME_LENGTH"])
+    cvals["IDDS_MAX_NAME_LENGTH"] = max_name_length
     search_opt["curvals"] = cvals
     _, executable = remote_build.search("runnerCommand", opt=search_opt)
     executable = executable.replace("_download_cmd_line_", remote_filename)
