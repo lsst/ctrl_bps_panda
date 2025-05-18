@@ -184,6 +184,8 @@ def replace_event_file(params, files):
         Example params:
             isr:eventservice_90^10+somethingelse. This part
             'isr:eventservice_90^10' is the EventService parameter.
+            isr:orderIdMap_10. This part is using order_id map file. But it
+            is not EventService.
         The format for the EventService parameter for LSST is
         'label:eventservice_<baseid>^<localid>'. The '<localid>' should
         start from 1, which means the first event of the file
@@ -217,6 +219,7 @@ def replace_event_file(params, files):
     """
     ret_status = True
     with_events = False
+    with_order_id_map = False
     files = files.split("+")
     file_map = {}
     for file in files:
@@ -272,8 +275,33 @@ def replace_event_file(params, files):
                 ret_status = False
                 break
 
-            params_map[param] = {"event_index": event_index, "order_id_map": order_id_map[label]}
-    return ret_status, with_events, params_map
+            params_map[param] = {"order_id": event_index, "order_id_map": order_id_map[label]}
+        elif 'orderIdMap_' in param:
+            with_order_id_map = True
+            label, event = param.split(":")
+            order_id = event.split("_")[1]
+            if not order_id_map:
+                print("orderIdMap is enabled but order_id_map file doesn't exist.")
+                ret_status = False
+                break
+
+            if label not in order_id_map:
+                print(
+                    f"orderIdMap is enabled but label {label} doesn't in the keys"
+                    f" of order_id_map {order_id_map.keys()}"
+                )
+                ret_status = False
+                break
+            if order_id not in order_id_map[label]:
+                print(
+                    f"orderIdMap is enabled but order_id {order_id} is not"
+                    f" in order_id_map[{label}] {order_id_map[label].keys()}"
+                )
+                ret_status = False
+                break
+
+            params_map[param] = {"order_id": order_id, "order_id_map": order_id_map[label]}
+    return ret_status, with_events, with_order_id_map, params_map
 
 
 deliver_input_files(sys.argv[3], sys.argv[4], sys.argv[5])
@@ -281,22 +309,28 @@ cmd_line = str(binascii.unhexlify(sys.argv[1]).decode())
 data_params = sys.argv[2]
 cmd_line = replace_environment_vars(cmd_line)
 
+print(f"cmd_line: {cmd_line}")
+print(f"data_params: {data_params}")
+
 # If EventService is enabled, data_params will only contain event information.
 # So we need to convert the event information to LSST pseudo file names.
 # If EventService is not enabled, this part will not change data_params.
-ret_event_status, with_events, event_params_map = replace_event_file(data_params, sys.argv[4])
-print(f"ret_event_status: {ret_event_status}, with_events: {with_events}")
+ret_event_status, with_events, with_order_id_map, event_params_map = replace_event_file(data_params, sys.argv[4])
+print(f"ret_event_status: {ret_event_status}, with_events: {with_events}, with_order_id_map: {with_order_id_map}")
 if not ret_event_status:
-    print("failed to map EventService parameters to original LSST pseudo file names")
+    print("failed to map EventService/orderIdMap parameters to original LSST pseudo file names")
     exit_code = 1
     sys.exit(exit_code)
 
 for event_param in event_params_map:
-    event_index = event_params_map[event_param]["event_index"]
-    pseudo_file_name = event_params_map[event_param]["order_id_map"][event_index]
-    print(f"replacing event {event_param} with event_index {event_index} to: {pseudo_file_name}")
+    order_id = event_params_map[event_param]["order_id"]
+    pseudo_file_name = event_params_map[event_param]["order_id_map"][order_id]
+    print(f"replacing event {event_param} with order_id {order_id} to: {pseudo_file_name}")
     cmd_line = cmd_line.replace(event_param, pseudo_file_name)
     data_params = data_params.replace(event_param, pseudo_file_name)
+
+# If job name map is enabled, data_params will only contain order_id information.
+# Here we will convert order_id information to LSST pseudo file names.
 
 data_params = data_params.split("+")
 
