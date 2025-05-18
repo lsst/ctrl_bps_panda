@@ -38,10 +38,10 @@ import re
 from idds.workflowv2.workflow import Workflow as IDDS_client_workflow
 
 from lsst.ctrl.bps import (
-    BaseWmsService,
-    BaseWmsWorkflow,
     DEFAULT_MEM_FMT,
     DEFAULT_MEM_UNIT,
+    BaseWmsService,
+    BaseWmsWorkflow,
     WmsRunReport,
     WmsStates,
 )
