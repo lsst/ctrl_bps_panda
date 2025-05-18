@@ -604,9 +604,7 @@ def add_idds_work(config, generic_workflow, idds_workflow):
     _LOG.info(f"enable_job_name_map: {enable_job_name_map}, {type(enable_job_name_map)}")
     if enable_event_service and not enable_job_name_map:
         enable_job_name_map = True
-        my_log = (
-            "enable_event_service is set, set enable_job_name_map True."
-        )
+        my_log = "enable_event_service is set, set enable_job_name_map True."
         _LOG.info(my_log)
 
     # Limit number of jobs in single PanDA task
@@ -749,14 +747,22 @@ def add_idds_work(config, generic_workflow, idds_workflow):
             if not missing_deps:
                 if enable_job_name_map:
                     work.dependency_map.append(
-                        {"name": f"{job_label}:orderIdMap_{order_id}", "order_id": order_id, "dependencies": deps}
+                        {
+                            "name": f"{job_label}:orderIdMap_{order_id}",
+                            "order_id": order_id,
+                            "dependencies": deps,
+                        }
                     )
                 else:
                     work.dependency_map.append(
                         {"name": pseudo_filename, "order_id": order_id, "dependencies": deps}
                     )
             else:
-                jobs_with_dependency_issues[gwjob.name] = {"work": work, "order_id": order_id, 'label': job_label}
+                jobs_with_dependency_issues[gwjob.name] = {
+                    "work": work,
+                    "order_id": order_id,
+                    "label": job_label,
+                }
 
     # If there were any issues figuring out dependencies through earlier loop
     if jobs_with_dependency_issues:
@@ -797,7 +803,9 @@ def add_idds_work(config, generic_workflow, idds_workflow):
                 )
             else:
                 pseudo_filename = job_to_pseudo_filename[job_name]
-                work.dependency_map.append({"name": pseudo_filename, "order_id": order_id, "dependencies": deps})
+                work.dependency_map.append(
+                    {"name": pseudo_filename, "order_id": order_id, "dependencies": deps}
+                )
 
         _LOG.info("Successfully recovered.")
 

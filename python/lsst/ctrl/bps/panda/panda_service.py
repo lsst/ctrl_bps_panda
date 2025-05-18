@@ -37,9 +37,14 @@ import re
 
 from idds.workflowv2.workflow import Workflow as IDDS_client_workflow
 
-from lsst.utils.timer import time_this
-from lsst.ctrl.bps import DEFAULT_MEM_FMT, DEFAULT_MEM_UNIT
-from lsst.ctrl.bps import BaseWmsService, BaseWmsWorkflow, WmsRunReport, WmsStates
+from lsst.ctrl.bps import (
+    BaseWmsService,
+    BaseWmsWorkflow,
+    DEFAULT_MEM_FMT,
+    DEFAULT_MEM_UNIT,
+    WmsRunReport,
+    WmsStates,
+)
 from lsst.ctrl.bps.panda.constants import PANDA_DEFAULT_MAX_COPY_WORKERS
 from lsst.ctrl.bps.panda.utils import (
     add_final_idds_work,
@@ -50,6 +55,7 @@ from lsst.ctrl.bps.panda.utils import (
     get_idds_result,
 )
 from lsst.resources import ResourcePath
+from lsst.utils.timer import time_this
 
 _LOG = logging.getLogger(__name__)
 

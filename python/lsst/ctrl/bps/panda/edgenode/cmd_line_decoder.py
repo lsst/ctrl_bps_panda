@@ -276,7 +276,7 @@ def replace_event_file(params, files):
                 break
 
             params_map[param] = {"order_id": event_index, "order_id_map": order_id_map[label]}
-        elif 'orderIdMap_' in param:
+        elif "orderIdMap_" in param:
             with_order_id_map = True
             label, event = param.split(":")
             order_id = event.split("_")[1]
@@ -315,8 +315,11 @@ print(f"data_params: {data_params}")
 # If EventService is enabled, data_params will only contain event information.
 # So we need to convert the event information to LSST pseudo file names.
 # If EventService is not enabled, this part will not change data_params.
-ret_event_status, with_events, with_order_id_map, event_params_map = replace_event_file(data_params, sys.argv[4])
-print(f"ret_event_status: {ret_event_status}, with_events: {with_events}, with_order_id_map: {with_order_id_map}")
+ret_rep = replace_event_file(data_params, sys.argv[4])
+ret_event_status, with_events, with_order_id_map, event_params_map = ret_rep
+print(
+    f"ret_event_status: {ret_event_status}, with_events: {with_events} with_order_id_map: {with_order_id_map}"
+)
 if not ret_event_status:
     print("failed to map EventService/orderIdMap parameters to original LSST pseudo file names")
     exit_code = 1
@@ -329,8 +332,9 @@ for event_param in event_params_map:
     cmd_line = cmd_line.replace(event_param, pseudo_file_name)
     data_params = data_params.replace(event_param, pseudo_file_name)
 
-# If job name map is enabled, data_params will only contain order_id information.
-# Here we will convert order_id information to LSST pseudo file names.
+# If job name map is enabled, data_params will only contain order_id
+# information.Here we will convert order_id information to LSST pseudo
+# file names.
 
 data_params = data_params.split("+")
 
