@@ -37,7 +37,14 @@ import re
 
 from idds.workflowv2.workflow import Workflow as IDDS_client_workflow
 
-from lsst.ctrl.bps import BaseWmsService, BaseWmsWorkflow, WmsRunReport, WmsStates
+from lsst.ctrl.bps import (
+    DEFAULT_MEM_FMT,
+    DEFAULT_MEM_UNIT,
+    BaseWmsService,
+    BaseWmsWorkflow,
+    WmsRunReport,
+    WmsStates,
+)
 from lsst.ctrl.bps.panda.constants import PANDA_DEFAULT_MAX_COPY_WORKERS
 from lsst.ctrl.bps.panda.utils import (
     add_final_idds_work,
@@ -48,6 +55,7 @@ from lsst.ctrl.bps.panda.utils import (
     get_idds_result,
 )
 from lsst.resources import ResourcePath
+from lsst.utils.timer import time_this
 
 _LOG = logging.getLogger(__name__)
 
@@ -58,10 +66,22 @@ class PanDAService(BaseWmsService):
     def prepare(self, config, generic_workflow, out_prefix=None):
         # Docstring inherited from BaseWmsService.prepare.
         _LOG.debug("out_prefix = '%s'", out_prefix)
-        workflow = PandaBpsWmsWorkflow.from_generic_workflow(
-            config, generic_workflow, out_prefix, f"{self.__class__.__module__}.{self.__class__.__name__}"
-        )
-        workflow.write(out_prefix)
+
+        _LOG.info("Starting PanDA prepare stage (creating specific implementation of workflow)")
+
+        with time_this(
+            log=_LOG,
+            level=logging.INFO,
+            prefix=None,
+            msg="PanDA prepare stage completed",
+            mem_usage=True,
+            mem_unit=DEFAULT_MEM_UNIT,
+            mem_fmt=DEFAULT_MEM_FMT,
+        ):
+            workflow = PandaBpsWmsWorkflow.from_generic_workflow(
+                config, generic_workflow, out_prefix, f"{self.__class__.__module__}.{self.__class__.__name__}"
+            )
+            workflow.write(out_prefix)
         return workflow
 
     def submit(self, workflow, **kwargs):

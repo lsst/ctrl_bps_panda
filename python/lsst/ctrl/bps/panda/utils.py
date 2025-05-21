@@ -222,7 +222,8 @@ def _make_doma_work(
     task_count,
     task_chunk,
     enable_event_service=False,
-    es_files=None,
+    enable_job_name_map=False,
+    order_id_map_files=None,
     es_label=None,
     max_payloads_per_panda_job=PANDA_DEFAULT_MAX_PAYLOADS_PER_PANDA_JOB,
     max_wms_job_wall_time=None,
@@ -248,8 +249,8 @@ def _make_doma_work(
     local_pfns : `dict` [`str`, `str`]
         Files which need to be copied to a workflow staging area.
     """
-    if es_files is None:
-        es_files = {}
+    if order_id_map_files is None:
+        order_id_map_files = {}
     _LOG.debug("Using gwjob %s to create new PanDA task (gwjob=%s)", gwjob.name, gwjob)
     cvals = {"curr_cluster": gwjob.label}
     _, site = config.search("computeSite", opt={"curvals": cvals, "required": True})
@@ -338,12 +339,14 @@ def _make_doma_work(
 
     maxwalltime = gwjob.request_walltime if gwjob.request_walltime else PANDA_DEFAULT_MAX_WALLTIME
     if enable_event_service:
-        for es_name in es_files:
-            local_pfns[es_name] = es_files[es_name]
         if gwjob.request_walltime and max_payloads_per_panda_job:
             maxwalltime = gwjob.request_walltime * max_payloads_per_panda_job
         elif max_wms_job_wall_time:
             maxwalltime = max_wms_job_wall_time
+
+    if enable_event_service or enable_job_name_map:
+        for es_name in order_id_map_files:
+            local_pfns[es_name] = order_id_map_files[es_name]
 
     for gwfile in generic_workflow.get_job_inputs(gwjob.name, transfer_only=True):
         local_pfns[gwfile.name] = gwfile.src_uri
@@ -596,6 +599,14 @@ def add_idds_work(config, generic_workflow, idds_workflow):
     )
     _LOG.info(my_log)
 
+    # job name map: Use a short job name to map the long job name
+    _, enable_job_name_map = config.search("enableJobNameMap", opt={"default": None})
+    _LOG.info(f"enable_job_name_map: {enable_job_name_map}, {type(enable_job_name_map)}")
+    if enable_event_service and not enable_job_name_map:
+        enable_job_name_map = True
+        my_log = "enable_event_service is set, set enable_job_name_map True."
+        _LOG.info(my_log)
+
     # Limit number of jobs in single PanDA task
     _, max_jobs_per_task = config.search("maxJobsPerTask", opt={"default": PANDA_DEFAULT_MAX_JOBS_PER_TASK})
 
@@ -614,14 +625,16 @@ def add_idds_work(config, generic_workflow, idds_workflow):
         archive_filename = create_archive_file(submit_path, archive_filename, files)
         remote_archive_filename = copy_files_to_pandacache(archive_filename)
 
-    es_files = {}
+    order_id_map_files = {}
     name_works = {}
     order_id_map = {}
+    job_name_to_order_id_map = {}
     doma_tree = None
     order_id_map_file = None
     if enable_event_service:
         enable_event_service = enable_event_service.split(",")
         enable_event_service = [i.strip() for i in enable_event_service]
+    if enable_job_name_map:
         doma_tree = DomaTree(name=generic_workflow.name)
         submit_path = config[".bps_defined.submitPath"]
         _, order_id_map_filename = config.search(
@@ -629,8 +642,14 @@ def add_idds_work(config, generic_workflow, idds_workflow):
         )
         order_id_map_file = os.path.join(submit_path, order_id_map_filename)
         order_id_map = doma_tree.order_jobs_from_generic_workflow(generic_workflow, order_id_map_file)
-        es_files = {"orderIdMapFilename": order_id_map_file}
-        files_to_pre_stage.update(es_files)
+        order_id_map_files = {"orderIdMapFilename": order_id_map_file}
+        files_to_pre_stage.update(order_id_map_files)
+
+        # job name to order id map
+        job_name_to_order_id_map = {
+            label: {job_name: order_id for order_id, job_name in orders.items()}
+            for label, orders in order_id_map.items()
+        }
 
     # To avoid dying due to optimizing number of times through workflow,
     # catch dependency issues to loop through again later.
@@ -684,7 +703,8 @@ def add_idds_work(config, generic_workflow, idds_workflow):
                     task_count,
                     task_chunk,
                     enable_event_service=work_enable_event_service,
-                    es_files=es_files,
+                    enable_job_name_map=enable_job_name_map,
+                    order_id_map_files=order_id_map_files,
                     es_label=job_label,
                     max_payloads_per_panda_job=max_payloads_per_panda_job,
                     max_wms_job_wall_time=max_wms_job_wall_time,
@@ -707,19 +727,35 @@ def add_idds_work(config, generic_workflow, idds_workflow):
                     missing_deps = True
                     break
                 else:
+                    if enable_job_name_map:
+                        parent_job = generic_workflow.get_job(parent_job_name)
+                        parent_job_label = parent_job.label
+                        parent_order_id = job_name_to_order_id_map[parent_job_label][parent_job_name]
+                        inputname = f"{parent_job_label}:orderIdMap_{parent_order_id}"
+                    else:
+                        inputname = job_to_pseudo_filename[parent_job_name]
+
                     deps.append(
                         {
                             "task": job_to_task[parent_job_name],
-                            "inputname": job_to_pseudo_filename[parent_job_name],
-                            "available": False,
+                            "inputname": inputname,
                         }
                     )
             if not missing_deps:
+                f_name = f"{job_label}:orderIdMap_{order_id}" if enable_job_name_map else pseudo_filename
                 work.dependency_map.append(
-                    {"name": pseudo_filename, "order_id": order_id, "dependencies": deps}
+                    {
+                        "name": f_name,
+                        "order_id": order_id,
+                        "dependencies": deps,
+                    }
                 )
             else:
-                jobs_with_dependency_issues[gwjob.name] = {"work": work, "order_id": order_id}
+                jobs_with_dependency_issues[gwjob.name] = {
+                    "work": work,
+                    "order_id": order_id,
+                    "label": job_label,
+                }
 
     # If there were any issues figuring out dependencies through earlier loop
     if jobs_with_dependency_issues:
@@ -729,6 +765,7 @@ def add_idds_work(config, generic_workflow, idds_workflow):
             deps = []
             work = work_item["work"]
             order_id = work_item["order_id"]
+            job_label = work_item["label"]
 
             for parent_job_name in generic_workflow.predecessors(job_name):
                 if parent_job_name not in job_to_task:
@@ -736,15 +773,29 @@ def add_idds_work(config, generic_workflow, idds_workflow):
                     raise RuntimeError(
                         "Could not recover from dependency issues ({job_name} missing {parent_job_name})."
                     )
+                if enable_job_name_map:
+                    parent_job = generic_workflow.get_job(parent_job_name)
+                    parent_job_label = parent_job.label
+                    parent_order_id = job_name_to_order_id_map[parent_job_label][parent_job_name]
+                    inputname = f"{parent_job_label}:orderIdMap_{parent_order_id}"
+                else:
+                    inputname = job_to_pseudo_filename[parent_job_name]
+
                 deps.append(
                     {
                         "task": job_to_task[parent_job_name],
-                        "inputname": job_to_pseudo_filename[parent_job_name],
-                        "available": False,
+                        "inputname": inputname,
                     }
                 )
-            pseudo_filename = job_to_pseudo_filename[job_name]
-            work.dependency_map.append({"name": pseudo_filename, "order_id": order_id, "dependencies": deps})
+
+            work.dependency_map.append(
+                {
+                    "name": f"{job_label}:orderIdMap_{order_id}" if enable_job_name_map else pseudo_filename,
+                    "order_id": order_id,
+                    "dependencies": deps,
+                }
+            )
+
         _LOG.info("Successfully recovered.")
 
     for task_name in name_works:
@@ -754,7 +805,7 @@ def add_idds_work(config, generic_workflow, idds_workflow):
         # 2) check to avoid duplicated items.
         work.dependency_map = work.dependency_map
 
-    if enable_event_service:
+    if enable_job_name_map:
         for label_name in order_id_map:
             for order_id in order_id_map[label_name]:
                 job_name = order_id_map[label_name][order_id]
