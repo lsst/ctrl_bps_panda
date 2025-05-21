@@ -792,7 +792,7 @@ def add_idds_work(config, generic_workflow, idds_workflow):
                 {
                     "name": f"{job_label}:orderIdMap_{order_id}" if enable_job_name_map else pseudo_filename,
                     "order_id": order_id,
-                    "dependencies": deps
+                    "dependencies": deps,
                 }
             )
 
