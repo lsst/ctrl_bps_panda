@@ -333,7 +333,7 @@ for event_param in event_params_map:
     data_params = data_params.replace(event_param, pseudo_file_name)
 
 # If job name map is enabled, data_params will only contain order_id
-# information.Here we will convert order_id information to LSST pseudo
+# information. Here we will convert order_id information to LSST pseudo
 # file names.
 
 data_params = data_params.split("+")

@@ -731,32 +731,25 @@ def add_idds_work(config, generic_workflow, idds_workflow):
                         parent_job = generic_workflow.get_job(parent_job_name)
                         parent_job_label = parent_job.label
                         parent_order_id = job_name_to_order_id_map[parent_job_label][parent_job_name]
-                        deps.append(
-                            {
-                                "task": job_to_task[parent_job_name],
-                                "inputname": f"{parent_job_label}:orderIdMap_{parent_order_id}",
-                            }
-                        )
+                        inputname = f"{parent_job_label}:orderIdMap_{parent_order_id}"
                     else:
-                        deps.append(
-                            {
-                                "task": job_to_task[parent_job_name],
-                                "inputname": job_to_pseudo_filename[parent_job_name],
-                            }
-                        )
-            if not missing_deps:
-                if enable_job_name_map:
-                    work.dependency_map.append(
+                        inputname = job_to_pseudo_filename[parent_job_name]
+
+                    deps.append(
                         {
-                            "name": f"{job_label}:orderIdMap_{order_id}",
-                            "order_id": order_id,
-                            "dependencies": deps,
+                            "task": job_to_task[parent_job_name],
+                            "inputname": inputname,
                         }
                     )
-                else:
-                    work.dependency_map.append(
-                        {"name": pseudo_filename, "order_id": order_id, "dependencies": deps}
-                    )
+            if not missing_deps:
+                f_name = f"{job_label}:orderIdMap_{order_id}" if enable_job_name_map else pseudo_filename
+                work.dependency_map.append(
+                    {
+                        "name": f_name,
+                        "order_id": order_id,
+                        "dependencies": deps,
+                    }
+                )
             else:
                 jobs_with_dependency_issues[gwjob.name] = {
                     "work": work,
@@ -784,28 +777,24 @@ def add_idds_work(config, generic_workflow, idds_workflow):
                     parent_job = generic_workflow.get_job(parent_job_name)
                     parent_job_label = parent_job.label
                     parent_order_id = job_name_to_order_id_map[parent_job_label][parent_job_name]
-                    deps.append(
-                        {
-                            "task": job_to_task[parent_job_name],
-                            "inputname": f"{parent_job_label}:orderIdMap_{parent_order_id}",
-                        }
-                    )
+                    inputname = f"{parent_job_label}:orderIdMap_{parent_order_id}"
                 else:
-                    deps.append(
-                        {
-                            "task": job_to_task[parent_job_name],
-                            "inputname": job_to_pseudo_filename[parent_job_name],
-                        }
-                    )
-            if enable_job_name_map:
-                work.dependency_map.append(
-                    {"name": f"{job_label}:orderIdMap_{order_id}", "order_id": order_id, "dependencies": deps}
+                    inputname = job_to_pseudo_filename[parent_job_name]
+
+                deps.append(
+                    {
+                        "task": job_to_task[parent_job_name],
+                        "inputname": inputname,
+                    }
                 )
-            else:
-                pseudo_filename = job_to_pseudo_filename[job_name]
-                work.dependency_map.append(
-                    {"name": pseudo_filename, "order_id": order_id, "dependencies": deps}
-                )
+
+            work.dependency_map.append(
+                {
+                    "name": f"{job_label}:orderIdMap_{order_id}" if enable_job_name_map else pseudo_filename,
+                    "order_id": order_id,
+                    "dependencies": deps
+                }
+            )
 
         _LOG.info("Successfully recovered.")
 
