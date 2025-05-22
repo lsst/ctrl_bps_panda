@@ -379,6 +379,44 @@ class PanDAService(BaseWmsService):
         if status != 0:
             raise RuntimeError(message)
 
+    def get_status(
+        self,
+        wms_workflow_id=None,
+        hist=0,
+        is_global=False,
+    ):
+        # Docstring inherited from BaseWmsService.get_status.
+
+        idds_client = get_idds_client(self.config)
+        ret = idds_client.get_requests(request_id=wms_workflow_id, with_detail=False)
+        _LOG.debug("PanDA get workflow status returned = %s", str(ret))
+
+        request_status = ret[0]
+        if request_status != 0:
+            state = WmsStates.UNKNOWN
+            message = f"Error to get workflow status: {ret} for id: {wms_workflow_id}"
+        else:
+            tasks = ret[1][1]
+            if not tasks:
+                message = f"No records found for workflow id '{wms_workflow_id}'. Hint: double check the id"
+                state = WmsStates.UNKNOWN
+            else:
+                message = ""
+                head = tasks[0]
+                workflow_status = head["status"]["attributes"]["_name_"]
+                if workflow_status in ["Finished"]:
+                    state = WmsStates.SUCCEEDED
+                elif workflow_status in ["Failed", "Expired", "SubFinished"]:
+                    state = WmsStates.FAILED
+                elif workflow_status in ["Cancelled"]:
+                    state = WmsStates.DELETED
+                elif workflow_status in ["Suspended"]:
+                    state = WmsStates.HELD
+                else:
+                    state = WmsStates.RUNNING
+
+        return state, message
+
 
 class PandaBpsWmsWorkflow(BaseWmsWorkflow):
     """A single Panda based workflow.
