@@ -344,9 +344,15 @@ data_params = data_params.split("+")
 """
 cmd_line = replace_files_placeholders(cmd_line, sys.argv[4])
 
-for key_value_pair in data_params[1:]:
-    (key, value) = key_value_pair.split(":")
-    cmd_line = cmd_line.replace("{" + key + "}", value)
+if os.path.isfile("qnode_map.json"):
+    with open("qnode_map.json", encoding="utf-8") as f:
+        qnode_map = json.load(f)
+    if "{qgraphNodeId}" in cmd_line:
+        cmd_line = cmd_line.replace("{qgraphNodeId}", qnode_map[data_params[0]])
+else:
+    for key_value_pair in data_params[1:]:
+        (key, value) = key_value_pair.split(":")
+        cmd_line = cmd_line.replace("{" + key + "}", value)
 
 print("executable command line:")
 print(cmd_line)
