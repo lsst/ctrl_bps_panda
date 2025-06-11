@@ -304,57 +304,87 @@ def replace_event_file(params, files):
     return ret_status, with_events, with_order_id_map, params_map
 
 
-deliver_input_files(sys.argv[3], sys.argv[4], sys.argv[5])
-cmd_line = str(binascii.unhexlify(sys.argv[1]).decode())
-data_params = sys.argv[2]
-cmd_line = replace_environment_vars(cmd_line)
+def use_map_file(input_file):
+    """Check whether the input file needs to be replaced
+    because enableQnodeMap is enabled.
 
-print(f"cmd_line: {cmd_line}")
-print(f"data_params: {data_params}")
+    Parameters
+    ----------
+    input_file : `str`
+        Input file either a pseudo file or job name.
 
-# If EventService is enabled, data_params will only contain event information.
-# So we need to convert the event information to LSST pseudo file names.
-# If EventService is not enabled, this part will not change data_params.
-ret_rep = replace_event_file(data_params, sys.argv[4])
-ret_event_status, with_events, with_order_id_map, event_params_map = ret_rep
-print(
-    f"ret_event_status: {ret_event_status}, with_events: {with_events} with_order_id_map: {with_order_id_map}"
-)
-if not ret_event_status:
-    print("failed to map EventService/orderIdMap parameters to original LSST pseudo file names")
+    Returns
+    -------
+    use_qnode_map: `bool`
+        Whether qnode_map is used. There is a placeholder 'PH'
+    when enableQnodeMap is true.
+    """
+    parts = input_file.split(":")
+    use_qnode_map = len(parts) == 2 and parts[0] == "PH"
+    return use_qnode_map
+
+
+if __name__ == "__main__":
+    deliver_input_files(sys.argv[3], sys.argv[4], sys.argv[5])
+    cmd_line = str(binascii.unhexlify(sys.argv[1]).decode())
+    data_params = sys.argv[2]
+    cmd_line = replace_environment_vars(cmd_line)
+
+    print(f"cmd_line: {cmd_line}")
+    print(f"data_params: {data_params}")
+
+    # If EventService is enabled, data_params will only contain
+    # event information. So we need to convert the event information
+    # to LSST pseudo file names. If EventService is not enabled,
+    # this part will not change data_params.
+    ret_rep = replace_event_file(data_params, sys.argv[4])
+    ret_event_status, with_events, with_order_id_map, event_params_map = ret_rep
+    print(
+        f"ret_event_status: {ret_event_status}, "
+        f"with_events: {with_events} "
+        f"with_order_id_map: {with_order_id_map}"
+    )
+    if not ret_event_status:
+        print("failed to map EventService/orderIdMap parameters to original LSST pseudo file names")
+        exit_code = 1
+        sys.exit(exit_code)
+
+    for event_param in event_params_map:
+        order_id = event_params_map[event_param]["order_id"]
+        pseudo_file_name = event_params_map[event_param]["order_id_map"][order_id]
+        print(f"replacing event {event_param} with order_id {order_id} to: {pseudo_file_name}")
+        cmd_line = cmd_line.replace(event_param, pseudo_file_name)
+        data_params = data_params.replace(event_param, pseudo_file_name)
+
+    # If job name map is enabled, data_params will only contain order_id
+    # information. Here we will convert order_id information to LSST pseudo
+    # file names.
+
+    data_params = data_params.split("+")
+
+    """Replace the pipetask command line placeholders
+     with actual data provided in the script call
+     in form placeholder1:file1+placeholder2:file2:...
+    """
+    cmd_line = replace_files_placeholders(cmd_line, sys.argv[4])
+
+    jobname = data_params[0]
+    if use_map_file(jobname):
+        with open("qnode_map.json", encoding="utf-8") as f:
+            qnode_map = json.load(f)
+            data_params = qnode_map[jobname].split("+")
+
+    for key_value_pair in data_params[1:]:
+        (key, value) = key_value_pair.split(":")
+        cmd_line = cmd_line.replace("{" + key + "}", value)
+
+    print("executable command line:")
+    print(cmd_line)
+
+    exit_status = os.system(cmd_line)
     exit_code = 1
+    if os.WIFSIGNALED(exit_status):
+        exit_code = os.WTERMSIG(exit_status) + 128
+    elif os.WIFEXITED(exit_status):
+        exit_code = os.WEXITSTATUS(exit_status)
     sys.exit(exit_code)
-
-for event_param in event_params_map:
-    order_id = event_params_map[event_param]["order_id"]
-    pseudo_file_name = event_params_map[event_param]["order_id_map"][order_id]
-    print(f"replacing event {event_param} with order_id {order_id} to: {pseudo_file_name}")
-    cmd_line = cmd_line.replace(event_param, pseudo_file_name)
-    data_params = data_params.replace(event_param, pseudo_file_name)
-
-# If job name map is enabled, data_params will only contain order_id
-# information. Here we will convert order_id information to LSST pseudo
-# file names.
-
-data_params = data_params.split("+")
-
-"""Replace the pipetask command line placeholders
- with actual data provided in the script call
- in form placeholder1:file1+placeholder2:file2:...
-"""
-cmd_line = replace_files_placeholders(cmd_line, sys.argv[4])
-
-for key_value_pair in data_params[1:]:
-    (key, value) = key_value_pair.split(":")
-    cmd_line = cmd_line.replace("{" + key + "}", value)
-
-print("executable command line:")
-print(cmd_line)
-
-exit_status = os.system(cmd_line)
-exit_code = 1
-if os.WIFSIGNALED(exit_status):
-    exit_code = os.WTERMSIG(exit_status) + 128
-elif os.WIFEXITED(exit_status):
-    exit_code = os.WEXITSTATUS(exit_status)
-sys.exit(exit_code)
