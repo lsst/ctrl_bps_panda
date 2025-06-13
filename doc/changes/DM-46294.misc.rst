@@ -1,1 +1,0 @@
-Updated test to pass label to GenericWorkflowJob's constructor.

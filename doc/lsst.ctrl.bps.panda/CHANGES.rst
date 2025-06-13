@@ -1,3 +1,27 @@
+lsst-ctrl-bps-panda v29.1.0 (2025-06-13)
+========================================
+
+New Features
+------------
+
+- Enabled environment variables to be set in BPS YAML files (`DM-49801 <https://rubinobs.atlassian.net/browse/DM-49801>`_)
+- Added get_status method to ``PanDAService`` class for quick checking of run status. (`DM-50619 <https://rubinobs.atlassian.net/browse/DM-50619>`_)
+- Now use a map file to reduce the size of the BPS PanDA submission size (`DM-50973 <https://rubinobs.atlassian.net/browse/DM-50973>`_)
+
+
+Bug Fixes
+---------
+
+- Fixed ``fileDistributionEndPoint`` for different protocols (`DM-49020 <https://rubinobs.atlassian.net/browse/DM-49020>`_)
+- Passed ``IDDS_MAX_NAME_LENGTH`` to remote build task (`DM-50400 <https://rubinobs.atlassian.net/browse/DM-50400>`_)
+
+
+Other Changes and Additions
+---------------------------
+
+- Updated test to pass label to GenericWorkflowJob's constructor. (`DM-46294 <https://rubinobs.atlassian.net/browse/DM-46294>`_)
+
+
 lsst-ctrl-bps-panda v29.0.0 (2025-03-25)
 ========================================
 

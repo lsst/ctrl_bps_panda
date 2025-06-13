@@ -1,1 +1,0 @@
-use a map file to reduce the size of the bps PanDA submission size
