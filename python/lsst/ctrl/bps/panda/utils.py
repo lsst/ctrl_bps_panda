@@ -37,6 +37,7 @@ __all__ = [
 
 import binascii
 import concurrent.futures
+import json
 import logging
 import os
 import random
@@ -228,6 +229,7 @@ def _make_doma_work(
     max_payloads_per_panda_job=PANDA_DEFAULT_MAX_PAYLOADS_PER_PANDA_JOB,
     max_wms_job_wall_time=None,
     remote_filename=None,
+    qnode_map_filename=None,
 ):
     """Make the DOMA Work object for a PanDA task.
 
@@ -357,6 +359,9 @@ def _make_doma_work(
 
         if gwfile.job_access_remote:
             direct_io_files.add(gwfile.name)
+
+    if qnode_map_filename:
+        local_pfns.update(qnode_map_filename)
 
     submit_cmd = generic_workflow.run_attrs.get("bps_iscustom", False)
 
@@ -590,6 +595,7 @@ def add_idds_work(config, generic_workflow, idds_workflow):
     """
     # event service
     _, enable_event_service = config.search("enableEventService", opt={"default": None})
+    _, enable_qnode_map = config.search("enableQnodeMap", opt={"default": None})
     _, max_payloads_per_panda_job = config.search(
         "maxPayloadsPerPandaJob", opt={"default": PANDA_DEFAULT_MAX_PAYLOADS_PER_PANDA_JOB}
     )
@@ -617,10 +623,11 @@ def add_idds_work(config, generic_workflow, idds_workflow):
     task_count = 0  # Task number/ID in idds workflow used for unique name
     remote_archive_filename = None
 
+    submit_path = config["submitPath"]
+
     submit_cmd = generic_workflow.run_attrs.get("bps_iscustom", False)
     if submit_cmd:
         files = generic_workflow.get_executables(data=False, transfer_only=True)
-        submit_path = config["submitPath"]
         archive_filename = f"jobO.{uuid.uuid4()}.tar.gz"
         archive_filename = create_archive_file(submit_path, archive_filename, files)
         remote_archive_filename = copy_files_to_pandacache(archive_filename)
@@ -636,7 +643,6 @@ def add_idds_work(config, generic_workflow, idds_workflow):
         enable_event_service = [i.strip() for i in enable_event_service]
     if enable_job_name_map:
         doma_tree = DomaTree(name=generic_workflow.name)
-        submit_path = config[".bps_defined.submitPath"]
         _, order_id_map_filename = config.search(
             "orderIdMapFilename", opt={"default": PANDA_DEFAULT_ORDER_ID_MAP_FILE}
         )
@@ -654,6 +660,14 @@ def add_idds_work(config, generic_workflow, idds_workflow):
     # To avoid dying due to optimizing number of times through workflow,
     # catch dependency issues to loop through again later.
     jobs_with_dependency_issues = {}
+
+    # Initialize quantum node map
+    qnode_map = {}
+    qnode_map_filename = None
+    if enable_qnode_map:
+        qnode_map_file = os.path.join(submit_path, "qnode_map.json")
+        qnode_map_filename = {"qnodemap": qnode_map_file}
+        files_to_pre_stage.update(qnode_map_filename)
 
     # Assume jobs with same label share config values
     for job_label in generic_workflow.labels:
@@ -709,6 +723,7 @@ def add_idds_work(config, generic_workflow, idds_workflow):
                     max_payloads_per_panda_job=max_payloads_per_panda_job,
                     max_wms_job_wall_time=max_wms_job_wall_time,
                     remote_filename=remote_archive_filename,
+                    qnode_map_filename=qnode_map_filename,
                 )
                 name_works[work.task_name] = work
                 files_to_pre_stage.update(files)
@@ -718,6 +733,12 @@ def add_idds_work(config, generic_workflow, idds_workflow):
 
             pseudo_filename = _make_pseudo_filename(config, gwjob)
             job_to_pseudo_filename[gwjob.name] = pseudo_filename
+
+            if enable_qnode_map:
+                job_name_PH = "PH:" + gwjob.name
+                job_to_pseudo_filename[gwjob.name] = job_name_PH
+                qnode_map[job_name_PH] = pseudo_filename
+
             job_to_task[gwjob.name] = work.get_work_name()
             deps = []
             missing_deps = False
@@ -742,7 +763,8 @@ def add_idds_work(config, generic_workflow, idds_workflow):
                         }
                     )
             if not missing_deps:
-                f_name = f"{job_label}:orderIdMap_{order_id}" if enable_job_name_map else pseudo_filename
+                j_name = job_to_pseudo_filename[gwjob.name]
+                f_name = f"{job_label}:orderIdMap_{order_id}" if enable_job_name_map else j_name
                 work.dependency_map.append(
                     {
                         "name": f_name,
@@ -756,6 +778,10 @@ def add_idds_work(config, generic_workflow, idds_workflow):
                     "order_id": order_id,
                     "label": job_label,
                 }
+
+    if enable_qnode_map:
+        with open(qnode_map_file, "w", encoding="utf-8") as f:
+            json.dump(qnode_map, f, indent=2)
 
     # If there were any issues figuring out dependencies through earlier loop
     if jobs_with_dependency_issues:
@@ -790,7 +816,7 @@ def add_idds_work(config, generic_workflow, idds_workflow):
 
             work.dependency_map.append(
                 {
-                    "name": f"{job_label}:orderIdMap_{order_id}" if enable_job_name_map else pseudo_filename,
+                    "name": f"{job_label}:orderIdMap_{order_id}" if enable_job_name_map else job_name,
                     "order_id": order_id,
                     "dependencies": deps,
                 }
