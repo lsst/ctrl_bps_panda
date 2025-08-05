@@ -25,6 +25,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-__all__ = ["clean", "reset", "status"]
+__all__ = ["clean", "reset", "refresh", "status"]
 
-from .panda_auth_commands import clean, reset, status
+from .panda_auth_commands import clean, reset, refresh, status

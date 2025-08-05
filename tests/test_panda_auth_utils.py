@@ -27,12 +27,49 @@
 
 """Unit tests for PanDA authentication utilities."""
 
+import base64
+import json
 import os
 import unittest
+from datetime import UTC, datetime, timedelta
 from unittest import mock
 
 from lsst.ctrl.bps.panda import __version__ as version
-from lsst.ctrl.bps.panda.panda_auth_utils import panda_auth_status
+from lsst.ctrl.bps.panda.panda_auth_utils import (
+    TokenExpiredError,
+    panda_auth_refresh,
+    panda_auth_status,
+)
+
+
+def make_fake_jwt(exp_offset_days):
+    """Return a fake id_token that expires in N days."""
+    payload = {"exp": int((datetime.now(UTC) + timedelta(days=exp_offset_days)).timestamp())}
+    b64_payload = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
+    return f"header.{b64_payload}.sig"
+
+
+def fake_token_file(exp_days=3, refresh_token="fake_refresh"):
+    """Generate fake token file data"""
+    token = make_fake_jwt(exp_days)
+    return json.dumps({"id_token": token, "refresh_token": refresh_token})
+
+
+def fetch_page_side_effect(url):
+    """Simulate OpenIdConnect_Utils.fetch_page behavior in tests."""
+    if url.endswith("auth_config.json"):
+        return True, {
+            "client_secret": "secret",
+            "audience": "https://iam.example.com",
+            "client_id": "cid",
+            "oidc_config_url": "https://oidc.example.org/.well-known/openid-configuration",
+            "vo": "fake_vo",
+            "no_verify": "True",
+            "robot_ids": "NONE",
+        }
+    elif url.endswith("openid-configuration"):
+        return True, {"token_endpoint": "https://oidc.example.org/token"}
+    return False, {}
 
 
 class VersionTestCase(unittest.TestCase):
@@ -46,6 +83,21 @@ class VersionTestCase(unittest.TestCase):
 class TestPandaAuthUtils(unittest.TestCase):
     """Simple test of auth utilities."""
 
+    def setUp(self):
+        self.test_env = {
+            "PANDA_CONFIG_ROOT": "/fake/token",
+            "PANDA_URL_SSL": "https://fake.server.com:8443/server/panda",
+            "PANDA_URL": "https://fake.server.com:8443/server/panda",
+            "PANDACACHE_URL": "https://fake.server.com:8443/server/panda",
+            "PANDAMON_URL": "https://fake.monitor.com:8443/",
+            "PANDA_AUTH": "oidc",
+            "PANDA_VERIFY_HOST": "off",
+            "PANDA_AUTH_VO": "fake_vo",
+            "PANDA_BEHIND_REAL_LB": "true",
+            "PANDA_SYS": "/fake/pandasys",
+            "IDDS_CONFIG": "/fake/pandasys/etc/idds/idds.cfg.client.template",
+        }
+
     def testPandaAuthStatusWrongEnviron(self):
         unwanted = {
             "PANDA_AUTH",
@@ -58,6 +110,41 @@ class TestPandaAuthUtils(unittest.TestCase):
         with mock.patch.dict(os.environ, test_environ, clear=True):
             with self.assertRaises(OSError):
                 panda_auth_status()
+
+    @mock.patch("builtins.print")
+    @mock.patch("os.path.exists", return_value=True)
+    @mock.patch("pandaclient.openidc_utils.OpenIdConnect_Utils")
+    def test_expired_token(self, mock_oidc, mock_exists, mock_print):
+        mock_oidc.return_value.get_token_path.return_value = "/fake/token.json"
+
+        with mock.patch.dict("os.environ", self.test_env):
+            with mock.patch("builtins.open", mock.mock_open(read_data=fake_token_file(exp_days=-1))):
+                with self.assertRaises(TokenExpiredError):
+                    panda_auth_refresh(days=4)
+
+    @mock.patch("builtins.print")
+    @mock.patch("lsst.ctrl.bps.panda.panda_auth_utils.panda_auth_status")
+    @mock.patch("os.path.exists", return_value=True)
+    @mock.patch("lsst.ctrl.bps.panda.panda_auth_utils.OpenIdConnect_Utils")
+    def test_successful_refresh(self, mock_oidc, mock_exists, mock_status, mock_print):
+        fake_openid = mock_oidc.return_value
+        fake_openid.get_token_path.return_value = "/fake/token.json"
+        fake_openid.auth_config_url = "https://fake.server/auth_config.json"
+
+        fake_openid.fetch_page.side_effect = fetch_page_side_effect
+
+        fake_openid.refresh_token.return_value = (True, {"access_token": "new_token"})
+
+        mock_status.return_value = {"exp": int((datetime.now(UTC) + timedelta(seconds=3600)).timestamp())}
+
+        with mock.patch.dict("os.environ", self.test_env):
+            token_json = fake_token_file(exp_days=2)
+            with mock.patch("builtins.open", mock.mock_open(read_data=token_json)):
+                panda_auth_refresh(days=4)
+
+        fake_openid.refresh_token.assert_called_once()
+        found = any("Success to refresh token" in str(c[0][0]) for c in mock_print.call_args_list)
+        assert found
 
 
 if __name__ == "__main__":
