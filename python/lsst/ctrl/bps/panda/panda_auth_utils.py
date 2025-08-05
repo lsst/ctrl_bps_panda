@@ -30,14 +30,18 @@
 __all__ = [
     "panda_auth_clean",
     "panda_auth_expiration",
+    "panda_auth_refresh",
     "panda_auth_setup",
     "panda_auth_status",
     "panda_auth_update",
 ]
 
 
+import base64
+import json
 import logging
 import os
+from datetime import datetime, timedelta
 
 import idds.common.utils as idds_utils
 import pandaclient.idds_api
@@ -151,3 +155,65 @@ def panda_auth_update(idds_server=None, reset=False):
         # idds server given.  So for now, check result string for keywords.
         if "request_id" not in ret[1][-1] or "status" not in ret[1][-1]:
             raise RuntimeError(f"Error contacting PanDA service: {ret}")
+
+
+def panda_auth_refresh(days=4, verbose=False):
+    """Refresh auth token"""
+    panda_url = os.environ.get("PANDA_URL")
+    panda_auth_vo = os.environ.get("PANDA_AUTH_VO")
+    url_prefix = panda_url.split("/server", 1)[0]
+    auth_url = f"{url_prefix}/auth/{panda_auth_vo}_auth_config.json"
+    open_id = OpenIdConnect_Utils(auth_url, log_stream=_LOG, verbose=verbose)
+
+    token_file = open_id.get_token_path()
+    if os.path.exists(token_file):
+        with open(token_file) as f:
+            data = json.load(f)
+            enc = data["id_token"].split(".")[1]
+            enc += "=" * (-len(enc) % 4)
+            dec = json.loads(base64.urlsafe_b64decode(enc.encode()))
+            exp_time = datetime.utcfromtimestamp(dec["exp"])
+            delta = exp_time - datetime.utcnow()
+            minutes = delta.total_seconds() / 60
+            print(f"Token will expire in {minutes} minutes.")
+            print(f"Token expiration time : {exp_time.strftime('%Y-%m-%d %H:%M:%S')} UTC")
+            if delta < timedelta(minutes=0):
+                print("Token already expired. Cannot refresh.")
+                return
+            elif delta > timedelta(days=days):
+                print("\n" + "=" * 60)
+                print(f" Too early to refresh. More than {days} day(s) until expiration.")
+                print(" To change this threshold, use the --days option:")
+                print("   Example: panda_auth refresh --days 10")
+                print("=" * 60 + "\n")
+                return
+    else:
+        print("Cannot find token file.")
+        return
+    refresh_token_string = data["refresh_token"]
+
+    s, auth_config = open_id.fetch_page(open_id.auth_config_url)
+    if not s:
+        print("Failed to get Auth configuration")
+        return
+
+    s, endpoint_config = open_id.fetch_page(auth_config["oidc_config_url"])
+    if not s:
+        print("Failed to get endpoint configuration")
+        return
+
+    s, o = open_id.refresh_token(
+        endpoint_config["token_endpoint"],
+        auth_config["client_id"],
+        auth_config["client_secret"],
+        refresh_token_string,
+    )
+
+    if not s:
+        print("Failed to refresh token")
+        return
+    else:
+        status = panda_auth_status()
+        if status:
+            print(f"{'New expiration time:':23} {datetime.utcfromtimestamp(status['exp'])} UTC")
+        print("Success to refresh token")

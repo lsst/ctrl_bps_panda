@@ -41,7 +41,12 @@ __all__ = [
 import logging
 from datetime import datetime
 
-from .panda_auth_utils import panda_auth_clean, panda_auth_status, panda_auth_update
+from .panda_auth_utils import (
+    panda_auth_clean,
+    panda_auth_refresh,
+    panda_auth_status,
+    panda_auth_update,
+)
 
 _LOG = logging.getLogger(__name__)
 
@@ -54,6 +59,11 @@ def panda_auth_clean_driver():
 def panda_auth_reset_driver():
     """Get new auth token."""
     panda_auth_update(None, True)
+
+
+def panda_auth_refresh_driver(days, verbose):
+    """Get new auth token."""
+    panda_auth_refresh(days, verbose)
 
 
 def panda_auth_status_driver():
