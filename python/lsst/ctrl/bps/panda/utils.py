@@ -828,7 +828,7 @@ def add_idds_work(config, generic_workflow, idds_workflow):
         work.dependency_map = sorted_dep_map
 
     if enable_job_name_map:
-        with open(order_id_map_file, 'w') as f:
+        with open(order_id_map_file, "w") as f:
             json.dump(order_id_map, f)
 
     return files_to_pre_stage, dag_sink_work, task_count
