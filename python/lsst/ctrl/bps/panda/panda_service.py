@@ -382,6 +382,18 @@ class PandaBpsWmsWorkflow(BaseWmsWorkflow):
         # Docstring inherited from BaseWmsWorkflow.from_generic_workflow.
         wms_workflow = cls(generic_workflow.name, config)
 
+        _, campaign = config.search("campaign", opt={"default": None})
+        _, campaign_scope = config.search("campaign_scope", opt={"default": None})
+        _, campaign_group = config.search("campaign_group", opt={"default": None})
+        _, campaign_tag = config.search("campaign_tag", opt={"default": None})
+        _, max_processing_requests = config.search("max_processing_requests", opt={"default": -1})
+
+        wms_workflow.idds_client_workflow.campaign = campaign
+        wms_workflow.idds_client_workflow.campaign_scope = campaign_scope
+        wms_workflow.idds_client_workflow.campaign_group = campaign_group
+        wms_workflow.idds_client_workflow.campaign_tag = campaign_tag
+        wms_workflow.idds_client_workflow.max_processing_requests = max_processing_requests
+
         if generic_workflow.run_attrs:
             wms_workflow.run_attrs.update(generic_workflow.run_attrs)
 

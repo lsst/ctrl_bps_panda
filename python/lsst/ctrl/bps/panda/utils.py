@@ -925,6 +925,18 @@ def create_idds_build_workflow(**kwargs):
 
     workflow = IDDS_client_workflow()
 
+    _, campaign = config.search("campaign", opt={"default": None})
+    _, campaign_scope = config.search("campaign_scope", opt={"default": None})
+    _, campaign_group = config.search("campaign_group", opt={"default": None})
+    _, campaign_tag = config.search("campaign_tag", opt={"default": None})
+    _, max_processing_requests = config.search("max_processing_requests", opt={"default": -1})
+
+    workflow.campaign = campaign
+    workflow.campaign_scope = campaign_scope
+    workflow.campaign_group = campaign_group
+    workflow.campaign_tag = campaign_tag
+    workflow.max_processing_requests = max_processing_requests
+
     workflow.add_work(build_work)
     workflow.name = config["bps_defined"]["uniqProcName"]
     return workflow
