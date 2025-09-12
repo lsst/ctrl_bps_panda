@@ -193,7 +193,7 @@ class PanDAService(BaseWmsService):
                 run=head["name"],
                 state=WmsStates.UNKNOWN,
                 total_number_jobs=0,
-                job_state_counts={state: 0 for state in WmsStates},
+                job_state_counts=dict.fromkeys(WmsStates, 0),
                 job_summary={},
                 run_summary="",
                 exit_code_summary=[],
