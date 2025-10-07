@@ -636,9 +636,19 @@ def add_idds_work(config, generic_workflow, idds_workflow):
     order_id_map = {}
     job_name_to_order_id_map = {}
     order_id_map_file = None
+    max_payloads_per_panda_job_by_label = {}
     if enable_event_service:
         enable_event_service = enable_event_service.split(",")
-        enable_event_service = [i.strip() for i in enable_event_service]
+        enable_event_service_tmp = []
+        for es_def in enable_event_service:
+            if ":" in es_def:
+                es_label, m_payloads = es_def.split(":")
+            else:
+                es_label, m_payloads = es_def, max_payloads_per_panda_job
+            es_label = es_label.strip()
+            enable_event_service_tmp.append(es_label)
+            max_payloads_per_panda_job_by_label[es_label] = int(m_payloads)
+        enable_event_service = enable_event_service_tmp
     if enable_job_name_map:
         _, order_id_map_filename = config.search(
             "orderIdMapFilename", opt={"default": PANDA_DEFAULT_ORDER_ID_MAP_FILE}
@@ -708,6 +718,9 @@ def add_idds_work(config, generic_workflow, idds_workflow):
                 work_enable_event_service = False
                 if enable_event_service and job_label in enable_event_service:
                     work_enable_event_service = True
+                max_payloads_per_panda_job_current = max_payloads_per_panda_job_by_label.get(
+                    job_label, max_payloads_per_panda_job
+                )
                 work, files = _make_doma_work(
                     config,
                     generic_workflow,
@@ -718,7 +731,7 @@ def add_idds_work(config, generic_workflow, idds_workflow):
                     enable_job_name_map=enable_job_name_map,
                     order_id_map_files=order_id_map_files,
                     es_label=job_label,
-                    max_payloads_per_panda_job=max_payloads_per_panda_job,
+                    max_payloads_per_panda_job=max_payloads_per_panda_job_current,
                     max_wms_job_wall_time=max_wms_job_wall_time,
                     remote_filename=remote_archive_filename,
                     qnode_map_filename=qnode_map_filename,
