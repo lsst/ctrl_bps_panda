@@ -1,7 +1,9 @@
 # enable EventService to have multiple payloads per PanDA job
 
 # list of bps job labels to enable EventService
-enableEventService: isr,step1
+# The format is label[:maxPayloadsPerPandaJob<Optional>].
+# If maxPayloadsPerPandaJob is not specified for a label, the global one will be used.
+enableEventService: isr:20,step1
 
 # When EventService is enabled, if requestWalltime and maxWmsJobWalltime are defined,
 # max_payloads_per_panda_job = int(maxWmsJobWalltime / requestWalltime)
