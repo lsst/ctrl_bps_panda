@@ -640,11 +640,11 @@ def add_idds_work(config, generic_workflow, idds_workflow):
     if enable_event_service:
         enable_event_service = enable_event_service.split(",")
         enable_event_service_tmp = []
-        for i in enable_event_service:
-            if ":" in i:
-                es_label, m_payloads = i.split(":")
+        for es_def in enable_event_service:
+            if ":" in es_def:
+                es_label, m_payloads = es_def.split(":")
             else:
-                es_label, m_payloads = i, max_payloads_per_panda_job
+                es_label, m_payloads = es_def, max_payloads_per_panda_job
             es_label = es_label.strip()
             enable_event_service_tmp.append(es_label)
             max_payloads_per_panda_job_by_label[es_label] = int(m_payloads)
@@ -719,7 +719,7 @@ def add_idds_work(config, generic_workflow, idds_workflow):
                 if enable_event_service and job_label in enable_event_service:
                     work_enable_event_service = True
                 max_payloads_per_panda_job_current = max_payloads_per_panda_job_by_label.get(
-                    job_label, PANDA_DEFAULT_MAX_PAYLOADS_PER_PANDA_JOB
+                    job_label, max_payloads_per_panda_job
                 )
                 work, files = _make_doma_work(
                     config,
