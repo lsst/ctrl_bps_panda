@@ -723,6 +723,7 @@ def add_idds_work(config, generic_workflow, idds_workflow):
                     remote_filename=remote_archive_filename,
                     qnode_map_filename=qnode_map_filename,
                 )
+                work.dependency_tasks = []
                 name_works[work.task_name] = work
                 files_to_pre_stage.update(files)
                 idds_workflow.add_work(work)
@@ -751,12 +752,15 @@ def add_idds_work(config, generic_workflow, idds_workflow):
                     else:
                         inputname = job_to_pseudo_filename[parent_job_name]
 
+                    parent_task_name = job_to_task[parent_job_name]
                     deps.append(
                         {
-                            "task": job_to_task[parent_job_name],
+                            "task": parent_task_name,
                             "inputname": inputname,
                         }
                     )
+                    if parent_task_name not in work.dependency_tasks:
+                        work.dependency_tasks.append(parent_task_name)
             if not missing_deps:
                 j_name = job_to_pseudo_filename[gwjob.name]
                 f_name = f"{job_label}:orderIdMap_{order_id}" if enable_job_name_map else j_name
@@ -802,12 +806,15 @@ def add_idds_work(config, generic_workflow, idds_workflow):
                 else:
                     inputname = job_to_pseudo_filename[parent_job_name]
 
+                parent_task_name = job_to_task[parent_job_name]
                 deps.append(
                     {
-                        "task": job_to_task[parent_job_name],
+                        "task": parent_task_name,
                         "inputname": inputname,
                     }
                 )
+                if parent_task_name not in work.dependency_tasks:
+                    work.dependency_tasks.append(parent_task_name)
 
             work.dependency_map.append(
                 {
