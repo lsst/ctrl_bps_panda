@@ -29,8 +29,10 @@
 
 __all__ = [
     "add_decoder_prefix",
+    "aggregate_by_basename",
     "convert_exec_string_to_hex",
     "copy_files_for_distribution",
+    "extract_taskname",
     "get_idds_client",
     "get_idds_result",
 ]
@@ -41,6 +43,7 @@ import json
 import logging
 import os
 import random
+import re
 import tarfile
 import time
 import uuid
@@ -51,7 +54,7 @@ from idds.doma.workflowv2.domapandawork import DomaPanDAWork
 from idds.workflowv2.workflow import AndCondition
 from idds.workflowv2.workflow import Workflow as IDDS_client_workflow
 
-from lsst.ctrl.bps import BpsConfig, GenericWorkflow, GenericWorkflowJob
+from lsst.ctrl.bps import BpsConfig, GenericWorkflow, GenericWorkflowJob, WmsStates
 from lsst.ctrl.bps.panda.cmd_line_embedder import CommandLineEmbedder
 from lsst.ctrl.bps.panda.constants import (
     PANDA_DEFAULT_CLOUD,
@@ -73,6 +76,104 @@ from lsst.ctrl.bps.panda.constants import (
 from lsst.resources import ResourcePath
 
 _LOG = logging.getLogger(__name__)
+
+
+def extract_taskname(s: str) -> str:
+    """
+    Extract the task name from a string that follows a pattern
+    CampaignName_timestamp_TaskNumber_TaskLabel_ChunkNumber.
+
+    Parameters
+    ----------
+    s:  `str`
+        The input string from which to extract the task name.
+
+    Returns
+    -------
+    `str`:
+        The extracted task name as per the rules above.
+    """
+    # remove surrounding quotes/spaces if present
+    s = s.strip().strip("'\"")
+
+    # find all occurrences of underscore + digits + underscore,
+    # take the last one
+    matches = list(re.finditer(r"_(\d+)_", s))
+    if matches:
+        last = matches[-1]
+        return s[last.end() :]
+
+    # fallback: if no such pattern, return everything
+    return s
+
+
+def aggregate_by_basename(job_summary, exit_code_summary, run_summary):
+    """
+    Aggregate job exit code and run summaries by their base label (basename).
+
+    Parameters
+    ----------
+    job_summary : `dict`[`str`, `dict`[`str`, `int`]]
+        A mapping of job labels to state-count mappings.
+    exit_code_summary : `dict`[`str`, `list`[`int`]]
+        A mapping of job labels to lists of exit codes.
+    run_summary : `str`
+        A semicolon-separated string of job summaries
+        where each entry has the format "<label>:<count>".
+
+    Returns
+    -------
+    `tuple`[`dict`[`str`, `dict`[`str`, `int`]],
+            `dict`[`str`, `list`[`int`]], `str`]
+        aggregated_jobs : `dict`
+            A dictionary mapping each base label to the summed
+            job state counts across all matching labels.
+        aggregated_exits : `dict`
+            A dictionary mapping each base label to a combined list of
+            exit codes from all matching labels.
+        aggregated_run: `str`
+            A semicolon-separated string with aggregated job counts
+            by base label.
+    """
+
+    def base_label(label):
+        return re.sub(r"_\d+$", "", label)
+
+    aggregated_jobs = {}
+    aggregated_exits = {}
+    aggregated_run = ""
+
+    for label, states in job_summary.items():
+        base = base_label(label)
+        if base not in aggregated_jobs:
+            aggregated_jobs[base] = dict.fromkeys(WmsStates, 0)
+        for state, count in states.items():
+            aggregated_jobs[base][state] += count
+
+    for label, codes in exit_code_summary.items():
+        base = base_label(label)
+        aggregated_exits.setdefault(base, []).extend(codes)
+
+    aggregated = {}
+    ordered_labels = []
+    for entry in run_summary.split(";"):
+        entry = entry.strip()
+        if not entry:
+            continue
+        try:
+            label, num = entry.split(":")
+            num = int(num)
+        except ValueError:
+            continue
+
+        base = base_label(label)
+        if base not in aggregated:
+            aggregated[base] = 0
+            ordered_labels.append(base)
+        aggregated[base] += num
+
+    aggregated_run = ";".join(f"{base}:{aggregated[base]}" for base in ordered_labels)
+    return aggregated_jobs, aggregated_exits, aggregated_run
 
 
 def copy_files_for_distribution(files_to_stage, file_distribution_uri, max_copy_workers):
