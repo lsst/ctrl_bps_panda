@@ -33,6 +33,7 @@ the subcommand method.
 
 __all__ = [
     "panda_auth_clean_driver",
+    "panda_auth_refresh_driver",
     "panda_auth_reset_driver",
     "panda_auth_status_driver",
 ]
@@ -41,7 +42,19 @@ __all__ = [
 import logging
 from datetime import datetime
 
-from .panda_auth_utils import panda_auth_clean, panda_auth_status, panda_auth_update
+from lsst.ctrl.bps.panda.panda_exceptions import (
+    PandaAuthError,
+    TokenExpiredError,
+    TokenNotFoundError,
+    TokenTooEarlyError,
+)
+
+from .panda_auth_utils import (
+    panda_auth_clean,
+    panda_auth_refresh,
+    panda_auth_status,
+    panda_auth_update,
+)
 
 _LOG = logging.getLogger(__name__)
 
@@ -54,6 +67,20 @@ def panda_auth_clean_driver():
 def panda_auth_reset_driver():
     """Get new auth token."""
     panda_auth_update(None, True)
+
+
+def panda_auth_refresh_driver(days, verbose):
+    """Refresh auth token."""
+    try:
+        panda_auth_refresh(days, verbose)
+    except TokenNotFoundError as e:
+        print(f"[ERROR] {e}")
+    except TokenExpiredError as e:
+        print(f"[ERROR] {e}")
+    except TokenTooEarlyError as e:
+        print(f"[INFO] {e}")
+    except PandaAuthError as e:
+        print(f"[FAIL] {e}")
 
 
 def panda_auth_status_driver():

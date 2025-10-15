@@ -28,6 +28,7 @@
 
 __all__ = [
     "clean",
+    "refresh",
     "reset",
     "status",
 ]
@@ -37,7 +38,12 @@ import click
 
 from lsst.daf.butler.cli.utils import MWCommand
 
-from ...panda_auth_drivers import panda_auth_clean_driver, panda_auth_reset_driver, panda_auth_status_driver
+from ...panda_auth_drivers import (
+    panda_auth_clean_driver,
+    panda_auth_refresh_driver,
+    panda_auth_reset_driver,
+    panda_auth_status_driver,
+)
 
 
 class PandaAuthCommand(MWCommand):
@@ -62,3 +68,13 @@ def reset(*args, **kwargs):
 def clean(*args, **kwargs):
     """Clean up token and token cache files."""
     panda_auth_clean_driver(*args, **kwargs)
+
+
+@click.command(cls=PandaAuthCommand)
+@click.option("--days", default=4, help="The earlist remaining days to refresh the token.")
+@click.option("--verbose", is_flag=True, help="Enable verbose output")
+def refresh(*args, **kwargs):
+    """Refresh auth tocken."""
+    days = kwargs.get("days", 4)
+    verbose = kwargs.get("verbose", False)
+    panda_auth_refresh_driver(days, verbose)
