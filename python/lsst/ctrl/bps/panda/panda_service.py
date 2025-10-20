@@ -55,6 +55,7 @@ from lsst.ctrl.bps.panda.utils import (
     extract_taskname,
     get_idds_client,
     get_idds_result,
+    idds_call_with_check,
 )
 from lsst.resources import ResourcePath
 from lsst.utils.timer import time_this
@@ -174,12 +175,12 @@ class PanDAService(BaseWmsService):
             return run_reports, message
 
         idds_client = get_idds_client(self.config)
-        ret = idds_client.get_requests(request_id=wms_workflow_id, with_detail=True)
-        _LOG.debug("PanDA get workflow status returned = %s", str(ret))
-
-        request_status = ret[0]
-        if request_status != 0:
-            raise RuntimeError(f"Error to get workflow status: {ret} for id: {wms_workflow_id}")
+        ret = idds_call_with_check(
+            idds_client.get_requests,
+            func_name="get workflow status",
+            request_id=wms_workflow_id,
+            with_detail=True,
+        )
 
         tasks = ret[1][1]
         if not tasks:
@@ -268,8 +269,6 @@ class PanDAService(BaseWmsService):
             totaljobs = task.get("output_total_files", 0)
             wms_report.total_number_jobs += totaljobs
 
-            taskstatus = {}
-
             # --- If task failed/subfinished, fetch exit codes ---
             if status in ("SubFinished", "Failed") and not task_name.startswith("build_task"):
                 transform_workload_id = task.get("transform_workload_id")
@@ -279,18 +278,12 @@ class PanDAService(BaseWmsService):
                     nfailed = task.get("output_failed_files", 0)
                     exit_codes_all[tasklabel] = [1] * nfailed
                     if return_exit_codes:
-                        new_ret = idds_client.get_contents_output_ext(
-                            request_id=wms_workflow_id, workload_id=transform_workload_id
+                        new_ret = idds_call_with_check(
+                            idds_client.get_contents_output_ext,
+                            func_name=f"get task {transform_workload_id} detail",
+                            request_id=wms_workflow_id,
+                            workload_id=transform_workload_id,
                         )
-                        _LOG.debug(
-                            "PanDA get task %s detail returned = %s",
-                            transform_workload_id,
-                            str(new_ret),
-                        )
-                        if new_ret[0] != 0:
-                            raise RuntimeError(
-                                f"Error getting workflow status: {new_ret} for id: {wms_workflow_id}"
-                            )
                         # task_info is a dictionary of len 1 that contains
                         # a list of dicts containing panda job info
                         task_info = new_ret[1][1]
@@ -302,15 +295,16 @@ class PanDAService(BaseWmsService):
                                 if j.get("trans_exit_code") not in (None, 0, "0")
                             ]
                             if nfailed > 0 and len(exit_codes_all[tasklabel]) == 0:
-                                _LOG.warning(
+                                _LOG.debug(
                                     f"No exit codes in iDDS task info for workload {transform_workload_id}"
                                 )
                         else:
-                            err_msg = "Unexpected iDDS task info for workload "
-                            err_msg += f"{transform_workload_id}: {task_info}"
-                            raise RuntimeError(err_msg)
+                            raise RuntimeError(
+                                f"Unexpected iDDS task info for workload {transform_workload_id}: {task_info}"
+                            )
 
             # --- Aggregate job states ---
+            taskstatus = {}
             mapped_states = state_map.get(status, [])
             for state in WmsStates:
                 njobs = 0

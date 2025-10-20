@@ -1,1 +1,1 @@
-Update bps report function to aggregate panda task slices into task labels
+Update "bps report" function to aggregate panda task slices into task labels
