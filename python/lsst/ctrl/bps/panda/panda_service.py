@@ -251,7 +251,7 @@ class PanDAService(BaseWmsService):
         # Sort tasks by workload_id or fallback
         try:
             tasks.sort(key=lambda x: x["transform_workload_id"])
-        except Exception:
+        except (KeyError, TypeError):
             tasks.sort(key=lambda x: x["transform_id"])
 
         exit_codes_all = {}
@@ -314,8 +314,16 @@ class PanDAService(BaseWmsService):
                         njobs = val
                     if state == WmsStates.RUNNING:
                         njobs += task.get("output_new_files", 0) - task.get("input_new_files", 0)
-                wms_report.job_state_counts[state] += njobs
+                if state != WmsStates.UNREADY:
+                    wms_report.job_state_counts[state] += njobs
                 taskstatus[state] = njobs
+
+            # Count UNREADY
+            unready = WmsStates.UNREADY
+            taskstatus[unready] = totaljobs - sum(
+                taskstatus[state] for state in WmsStates if state != unready
+            )
+            wms_report.job_state_counts[unready] += taskstatus[unready]
 
             # Store task summary
             wms_report.job_summary[tasklabel] = taskstatus

@@ -111,8 +111,8 @@ def extract_taskname(s: str) -> str:
 
 
 def aggregate_by_basename(job_summary, exit_code_summary, run_summary):
-    """
-    Aggregate job exit code and run summaries by their base label (basename).
+    """Aggregate job exit code and run summaries by
+    their base label (basename).
 
     Parameters
     ----------
