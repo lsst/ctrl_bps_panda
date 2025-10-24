@@ -29,10 +29,13 @@
 
 __all__ = [
     "add_decoder_prefix",
+    "aggregate_by_basename",
     "convert_exec_string_to_hex",
     "copy_files_for_distribution",
+    "extract_taskname",
     "get_idds_client",
     "get_idds_result",
+    "idds_call_with_check",
 ]
 
 import binascii
@@ -41,6 +44,7 @@ import json
 import logging
 import os
 import random
+import re
 import tarfile
 import time
 import uuid
@@ -51,7 +55,7 @@ from idds.doma.workflowv2.domapandawork import DomaPanDAWork
 from idds.workflowv2.workflow import AndCondition
 from idds.workflowv2.workflow import Workflow as IDDS_client_workflow
 
-from lsst.ctrl.bps import BpsConfig, GenericWorkflow, GenericWorkflowJob
+from lsst.ctrl.bps import BpsConfig, GenericWorkflow, GenericWorkflowJob, WmsStates
 from lsst.ctrl.bps.panda.cmd_line_embedder import CommandLineEmbedder
 from lsst.ctrl.bps.panda.constants import (
     PANDA_DEFAULT_CLOUD,
@@ -73,6 +77,98 @@ from lsst.ctrl.bps.panda.constants import (
 from lsst.resources import ResourcePath
 
 _LOG = logging.getLogger(__name__)
+
+
+def extract_taskname(s: str) -> str:
+    """Extract the task name from a string that follows a pattern
+    CampaignName_timestamp_TaskNumber_TaskLabel_ChunkNumber.
+
+    Parameters
+    ----------
+    s : `str`
+        The input string from which to extract the task name.
+
+    Returns
+    -------
+    taskname : `str`
+        The extracted task name as per the rules above.
+    """
+    # remove surrounding quotes/spaces if present
+    s = s.strip().strip("'\"")
+
+    # find all occurrences of underscore + digits + underscore,
+    # take the last one
+    matches = re.findall(r"_(\d+)_", s)
+    if matches:
+        last_number = matches[-1]
+        last_pos = s.rfind(f"_{last_number}_") + len(f"_{last_number}_")
+        taskname = s[last_pos:]
+        return taskname
+
+    # fallback: if no such pattern, return everything
+    taskname = s
+    return taskname
+
+
+def aggregate_by_basename(job_summary, exit_code_summary, run_summary):
+    """Aggregate job exit code and run summaries by
+    their base label (basename).
+
+    Parameters
+    ----------
+    job_summary : `dict` [`str`, `dict` [`str`, `int`]]
+        A mapping of job labels to state-count mappings.
+    exit_code_summary : `dict` [`str`, `list` [`int`]]
+        A mapping of job labels to lists of exit codes.
+    run_summary : `str`
+        A semicolon-separated string of job summaries
+        where each entry has the format "<label>:<count>".
+
+    Returns
+    -------
+    aggregated_jobs : `dict` [`str`, `dict` [`str`, `int`]]
+        A dictionary mapping each base label to the summed job state counts
+        across all matching labels.
+    aggregated_exits : `dict` [`str`, `list` [`int`]]
+        A dictionary mapping each base label to a combined list of exit codes
+        from all matching labels.
+    aggregated_run : `str`
+        A semicolon-separated string with aggregated job counts by base label.
+    """
+
+    def base_label(label):
+        return re.sub(r"_\d+$", "", label)
+
+    aggregated_jobs = {}
+    aggregated_exits = {}
+
+    for label, states in job_summary.items():
+        base = base_label(label)
+        if base not in aggregated_jobs:
+            aggregated_jobs[base] = dict.fromkeys(WmsStates, 0)
+        for state, count in states.items():
+            aggregated_jobs[base][state] += count
+
+    for label, codes in exit_code_summary.items():
+        base = base_label(label)
+        aggregated_exits.setdefault(base, []).extend(codes)
+
+    aggregated = {}
+    for entry in run_summary.split(";"):
+        entry = entry.strip()
+        if not entry:
+            continue
+        try:
+            label, num = entry.split(":")
+            num = int(num)
+        except ValueError:
+            continue
+
+        base = base_label(label)
+        aggregated[base] = aggregated.get(base, 0) + num
+
+    aggregated_run = ";".join(f"{base}:{count}" for base, count in aggregated.items())
+    return aggregated_jobs, aggregated_exits, aggregated_run
 
 
 def copy_files_for_distribution(files_to_stage, file_distribution_uri, max_copy_workers):
@@ -191,6 +287,40 @@ def get_idds_result(ret):
             result = None
             error = f"iDDS returns errors: {ret[1][1]}"
     return status, result, error
+
+
+def idds_call_with_check(func, *, func_name: str, request_id: int, **kwargs):
+    """Call an iDDS client function, log, and check the return code.
+
+    Parameters
+    ----------
+    func : callable
+        The iDDS client function to call.
+    func_name : `str`
+        Name used for logging.
+    request_id : `int`
+        The request or workflow ID.
+    **kwargs
+        Additional keyword arguments passed to the function.
+
+    Returns
+    -------
+    ret : `Any`
+        The return value from the iDDS client function.
+    """
+    call_kwargs = dict(kwargs)
+    if request_id is not None:
+        call_kwargs["request_id"] = request_id
+
+    ret = func(**call_kwargs)
+
+    _LOG.debug("PanDA %s returned = %s", func_name, str(ret))
+
+    request_status = ret[0]
+    if request_status != 0:
+        raise RuntimeError(f"Error calling {func_name}: {ret} for id: {request_id}")
+
+    return ret
 
 
 def _make_pseudo_filename(config, gwjob):
