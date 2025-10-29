@@ -140,8 +140,8 @@ class PanDAService(BaseWmsService):
 
                 idds_wf = workflow.idds_client_workflow
                 workflow_steps = idds_wf.split_workflow_to_steps(
-                    request_cache=self.config["submitPath"],
-                    max_request_length=max_request_length)
+                    request_cache=self.config["submitPath"], max_request_length=max_request_length
+                )
                 for wf_step in workflow_steps:
                     ret_step = idds_client.submit(wf_step, username=None, use_dataset_name=False)
                     status, result_step, error = get_idds_result(ret_step)
