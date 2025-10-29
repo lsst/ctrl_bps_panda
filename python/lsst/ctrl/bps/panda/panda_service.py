@@ -49,7 +49,6 @@ from lsst.ctrl.bps.panda.constants import (
     PANDA_DEFAULT_MAX_COPY_WORKERS,
     PANDA_DEFAULT_MAX_REQUEST_LENGTH,
 )
-
 from lsst.ctrl.bps.panda.utils import (
     add_final_idds_work,
     add_idds_work,
