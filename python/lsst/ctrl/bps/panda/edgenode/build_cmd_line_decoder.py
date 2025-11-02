@@ -15,8 +15,13 @@ import sys
 
 from lsst.ctrl.bps.constants import DEFAULT_MEM_FMT, DEFAULT_MEM_UNIT
 from lsst.ctrl.bps.drivers import prepare_driver
-from lsst.ctrl.bps.panda.constants import PANDA_DEFAULT_MAX_COPY_WORKERS
-from lsst.ctrl.bps.panda.utils import copy_files_for_distribution, download_extract_archive, get_idds_client
+from lsst.ctrl.bps.panda.constants import (PANDA_DEFAULT_MAX_COPY_WORKERS, PANDA_DEFAULT_MAX_REQUEST_LENGTH)
+from lsst.ctrl.bps.panda.utils import (
+    copy_files_for_distribution,
+    download_extract_archive,
+    get_idds_client,
+    get_idds_result
+)
 from lsst.resources import ResourcePath
 from lsst.utils.timer import time_this
 
@@ -90,6 +95,22 @@ file_distribution_uri = ResourcePath(config["fileDistributionEndPoint"], forceDi
 copy_files_for_distribution(bps_workflow.files_to_pre_stage, file_distribution_uri, max_copy_workers)
 
 idds_client = get_idds_client(config)
+
+# split workflow into steps if the workflow is hughe
+_, max_request_length = config.search("maxRequestLength", opt={"default": PANDA_DEFAULT_MAX_REQUEST_LENGTH})
+workflow_steps = idds_workflow.split_workflow_to_steps(
+    request_cache=config["submitPath"], max_request_length=max_request_length
+)
+for wf_step in workflow_steps:
+    ret_step = idds_client.submit(wf_step, username=None, use_dataset_name=False)
+    status, result_step, error = get_idds_result(ret_step)
+    if status and result_step == 0:
+        msg = f"iDDS client manager successfully uploaded workflow step: {wf_step.step_name}"
+        print(msg)
+    else:
+        msg = f"iDDS client manager failed to submit workflow step {wf_step.step_name}: {ret_step}"
+        raise RuntimeError(msg)
+
 ret = idds_client.update_build_request(request_id, signature, idds_workflow)
 print(f"update_build_request returns: {ret}")
 sys.exit(ret[0])
