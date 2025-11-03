@@ -101,6 +101,7 @@ _, max_request_length = config.search("maxRequestLength", opt={"default": PANDA_
 workflow_steps = idds_workflow.split_workflow_to_steps(
     request_cache=config["submitPath"], max_request_length=max_request_length
 )
+print(f"workflow_steps: {workflow_steps}")
 for wf_step in workflow_steps:
     ret_step = idds_client.submit(wf_step, username=None, use_dataset_name=False)
     status, result_step, error = get_idds_result(ret_step)
