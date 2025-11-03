@@ -148,7 +148,10 @@ class PanDAService(BaseWmsService):
                         msg = f"iDDS client manager successfully uploaded workflow step: {wf_step.step_name}"
                         _LOG.info(msg)
                     else:
-                        msg = f"iDDS client manager failed to submit workflow step {wf_step.step_name}: {ret_step}"
+                        msg = (
+                            f"iDDS client manager failed to submit workflow step {wf_step.step_name}: "
+                            f"{ret_step}"
+                        )
                         raise RuntimeError(msg)
 
             ret = idds_client.submit(workflow.idds_client_workflow, username=None, use_dataset_name=False)
