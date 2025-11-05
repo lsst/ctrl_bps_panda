@@ -45,7 +45,10 @@ from lsst.ctrl.bps import (
     WmsRunReport,
     WmsStates,
 )
-from lsst.ctrl.bps.panda.constants import PANDA_DEFAULT_MAX_COPY_WORKERS
+from lsst.ctrl.bps.panda.constants import (
+    PANDA_DEFAULT_MAX_COPY_WORKERS,
+    PANDA_DEFAULT_MAX_REQUEST_LENGTH,
+)
 from lsst.ctrl.bps.panda.utils import (
     add_final_idds_work,
     add_idds_work,
@@ -111,6 +114,9 @@ class PanDAService(BaseWmsService):
             return idds_build_workflow
 
         else:
+            _, max_request_length = self.config.search(
+                "maxRequestLength", opt={"default": PANDA_DEFAULT_MAX_REQUEST_LENGTH}
+            )
             _, max_copy_workers = self.config.search(
                 "maxCopyWorkers", opt={"default": PANDA_DEFAULT_MAX_COPY_WORKERS}
             )
@@ -122,6 +128,7 @@ class PanDAService(BaseWmsService):
             if not protocol_pattern.match(file_distribution_uri):
                 file_distribution_uri = "file://" + file_distribution_uri
 
+            idds_client = get_idds_client(self.config)
             submit_cmd = workflow.run_attrs.get("bps_iscustom", False)
             if not submit_cmd:
                 copy_files_for_distribution(
@@ -130,7 +137,23 @@ class PanDAService(BaseWmsService):
                     max_copy_workers,
                 )
 
-            idds_client = get_idds_client(self.config)
+                idds_wf = workflow.idds_client_workflow
+                workflow_steps = idds_wf.split_workflow_to_steps(
+                    request_cache=self.config["submitPath"], max_request_length=max_request_length
+                )
+                for wf_step in workflow_steps:
+                    ret_step = idds_client.submit(wf_step, username=None, use_dataset_name=False)
+                    status, result_step, error = get_idds_result(ret_step)
+                    if status and result_step == 0:
+                        msg = f"iDDS client manager successfully uploaded workflow step: {wf_step.step_name}"
+                        _LOG.info(msg)
+                    else:
+                        msg = (
+                            f"iDDS client manager failed to submit workflow step {wf_step.step_name}: "
+                            f"{ret_step}"
+                        )
+                        raise RuntimeError(msg)
+
             ret = idds_client.submit(workflow.idds_client_workflow, username=None, use_dataset_name=False)
             _LOG.debug("iDDS client manager submit returned = %s", ret)
 
