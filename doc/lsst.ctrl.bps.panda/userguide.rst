@@ -38,7 +38,7 @@ Defining a submission
 BPS configuration files are YAML files with some reserved keywords and some
 special features. See `BPS configuration file`__ for details.
 
-.. Describe any plugin specific aspects of a defining a submission below if
+.. Describe any plugin specific aspects of defining a submission below if
    any.
 
 The memory autoscaling is *not* supported supported by the ``ctrl_bps_panda``, i.e.,
