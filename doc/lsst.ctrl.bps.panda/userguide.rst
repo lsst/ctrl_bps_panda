@@ -11,7 +11,7 @@ to execute workflows on computational resources managed by `PanDA`_.
 .. note::
 
    Documentation describing how to submit workflows for execution using PanDA
-   deployment in Interim Data Facility (*aka* Google cloud) can can be found at
+   deployment in Interim Data Facility (*aka* Google cloud) can be found at
    https://panda.lsst.io.
 
 .. _panda-plugin-wmsclass:
@@ -38,7 +38,7 @@ Defining a submission
 BPS configuration files are YAML files with some reserved keywords and some
 special features. See `BPS configuration file`__ for details.
 
-.. Describe any plugin specific aspects of a definiing a submission below if
+.. Describe any plugin specific aspects of a defining a submission below if
    any.
 
 The memory autoscaling is *not* supported supported by the ``ctrl_bps_panda``, i.e.,
