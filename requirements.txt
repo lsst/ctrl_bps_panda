@@ -7,5 +7,6 @@ panda-client
 pyyaml
 lsst-ctrl-bps @ git+https://github.com/lsst/ctrl_bps@main
 lsst-daf-butler @ git+https://github.com/lsst/daf_butler@main
+lsst-pipe-base @ git+https://github.com/lsst/pipe_base@main
 lsst-resources @ git+https://github.com/lsst/resources@main
 lsst-utils @ git+https://github.com/lsst/utils@main
