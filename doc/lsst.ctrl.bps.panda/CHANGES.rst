@@ -1,3 +1,23 @@
+lsst-ctrl-bps-panda v30.0.0 (2026-01-16)
+========================================
+
+New Features
+------------
+
+- Added refresh function in panda_auth (`DM-48912 <https://rubinobs.atlassian.net/browse/DM-48912>`_)
+- Now use job name to map the quantum nodes (`DM-50973 <https://rubinobs.atlassian.net/browse/DM-50973>`_)
+- Support different maxPayloadsPerPandaJob for different ES tasks (`DM-52454 <https://rubinobs.atlassian.net/browse/DM-52454>`_)
+- Added parts to set task dependency (`DM-52585 <https://rubinobs.atlassian.net/browse/DM-52585>`_)
+- Updated ``bps report`` function to aggregate panda task slices into task labels (`DM-52866 <https://rubinobs.atlassian.net/browse/DM-52866>`_)
+- Now split huge a workflow into smaller steps (`DM-52999 <https://rubinobs.atlassian.net/browse/DM-52999>`_)
+
+
+Bug Fixes
+---------
+
+- Fixed the ``order_id`` for ``EventService`` (``EventService`` requires the ``order_id`` to be continuous. When a big task is split to multiple tasks, the ``order_id`` was not continuous) (`DM-52283 <https://rubinobs.atlassian.net/browse/DM-52283>`_)
+
+
 lsst-ctrl-bps-panda v29.1.0 (2025-06-13)
 ========================================
 
