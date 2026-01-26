@@ -1,6 +1,10 @@
 remoteBuild:
   enabled: true
   runnerCommand: >
+    logDir=`pwd`;
+    chmod ugo+w ${logDir};
+    file=${logDir}/memory_monitor_output.txt; touch ${file}; chmod ugo+w ${file};
+    file=${logDir}/memory_monitor_summary.json; touch ${file}; chmod ugo+w ${file};
     export SHELL=/bin/bash;
     unset PYTHONPATH;
     source /cvmfs/sw.lsst.eu/almalinux-x86_64/lsst_distrib/{LSST_VERSION}/loadLSST.bash;
@@ -25,4 +29,12 @@ remoteBuild:
     export IDDS_MAX_NAME_LENGTH={IDDS_MAX_NAME_LENGTH};
     {custom_lsst_setup}
     python3 ${CTRL_BPS_PANDA_DIR}/python/lsst/ctrl/bps/panda/edgenode/build_cmd_line_decoder.py \
-            _download_cmd_line_ _build_cmd_line_ _compute_site_
+            _download_cmd_line_ _build_cmd_line_ _compute_site_ & pJob=$!;
+    prmon -i 5
+    -f ${logDir}/memory_monitor_output.txt
+    -j ${logDir}/memory_monitor_summary.json
+    -p $pJob & mJob=$!;
+    wait $pJob;
+    ret=$?;
+    wait $mJob;
+    exit $ret;
