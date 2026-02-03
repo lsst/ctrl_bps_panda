@@ -294,7 +294,7 @@ def idds_call_with_check(func, *, func_name: str, request_id: int, **kwargs):
 
     Parameters
     ----------
-    func : callable
+    func : `~collections.abc.Callable`
         The iDDS client function to call.
     func_name : `str`
         Name used for logging.
@@ -305,7 +305,7 @@ def idds_call_with_check(func, *, func_name: str, request_id: int, **kwargs):
 
     Returns
     -------
-    ret : `Any`
+    ret : `~typing.Any`
         The return value from the iDDS client function.
     """
     call_kwargs = dict(kwargs)
