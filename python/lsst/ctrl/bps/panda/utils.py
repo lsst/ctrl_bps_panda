@@ -366,12 +366,30 @@ def _make_doma_work(
     ----------
     config : `lsst.ctrl.bps.BpsConfig`
         BPS configuration.
+    generic_workflow : `lsst.ctrl.bps.GenericWorkflow`
+        The workflow.
     gwjob : `lsst.ctrl.bps.GenericWorkflowJob`
         Job representing the jobs for the PanDA task.
     task_count : `int`
         Count of PanDA tasks used when making unique names.
     task_chunk : `int`
         Count of chunk of a PanDA tasks used when making unique names.
+    enable_event_service : `bool`, optional
+        ???.
+    enable_job_name_map : `bool`, optional
+        ???.
+    order_id_map_files : `typing.Any`, optional
+        ???.
+    es_label : `typing.Any`, optional
+        ???.
+    max_payloads_per_panda_job : `int`, optional
+        ???.
+    max_wms_job_wall_time : `typing.Any`, optional
+        ???.
+    remote_filename : `typing.Any`, optional
+        ???.
+    qnode_map_filename : `typing.Any`, optional
+        ???.
 
     Returns
     -------
