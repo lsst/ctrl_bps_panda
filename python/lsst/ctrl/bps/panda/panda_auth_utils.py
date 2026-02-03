@@ -187,7 +187,7 @@ def panda_auth_refresh(days=4, verbose=False):
     Returns
     -------
     status: `dict`
-        A dictionary containing the refreshed token status
+        A dictionary containing the refreshed token status.
     """
     panda_url = os.environ.get("PANDA_URL")
     panda_auth_vo = os.environ.get("PANDA_AUTH_VO")

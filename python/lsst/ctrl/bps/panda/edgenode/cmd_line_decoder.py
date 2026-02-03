@@ -317,7 +317,7 @@ def use_map_file(input_file):
     -------
     use_qnode_map: `bool`
         Whether qnode_map is used. There is a placeholder 'PH'
-    when enableQnodeMap is true.
+        when enableQnodeMap is true.
     """
     parts = input_file.split(":")
     use_qnode_map = len(parts) == 2 and parts[0] == "PH"

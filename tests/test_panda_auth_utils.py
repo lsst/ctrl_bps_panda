@@ -42,21 +42,41 @@ from lsst.ctrl.bps.panda.panda_auth_utils import (
 )
 
 
-def make_fake_jwt(exp_offset_days):
-    """Return a fake id_token that expires in N days."""
+def make_fake_jwt(exp_offset_days: int) -> str:
+    """Return a fake id_token that expires in N days.
+
+    Parameters
+    ----------
+    exp_offset_days : `int`
+        Number of days to use for expiry.
+    """
     payload = {"exp": int((datetime.now(UTC) + timedelta(days=exp_offset_days)).timestamp())}
     b64_payload = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
     return f"header.{b64_payload}.sig"
 
 
-def fake_token_file(exp_days=3, refresh_token="fake_refresh"):
-    """Generate fake token file data"""
+def fake_token_file(exp_days: int = 3, refresh_token: str = "fake_refresh") -> str:
+    """Generate fake token file data.
+
+    Parameters
+    ----------
+    exp_days : `int`, optional
+        Number of days to use for expiry.
+    refresh_token : `str`, optional
+        Fake token to use.
+    """
     token = make_fake_jwt(exp_days)
     return json.dumps({"id_token": token, "refresh_token": refresh_token})
 
 
-def fetch_page_side_effect(url):
-    """Simulate OpenIdConnect_Utils.fetch_page behavior in tests."""
+def fetch_page_side_effect(url: str) -> tuple[bool, dict[str, str]]:
+    """Simulate OpenIdConnect_Utils.fetch_page behavior in tests.
+
+    Parameters
+    ----------
+    url : `str`
+        URL to fetch.
+    """
     if url.endswith("auth_config.json"):
         return True, {
             "client_secret": "secret",

@@ -1,1 +1,0 @@
-Removed unused ``isort`` and ``black`` sections from ``pyproject.toml``.  Bumped minimum Python version to 3.12. Switched docs action to use ``sphinxutils``.

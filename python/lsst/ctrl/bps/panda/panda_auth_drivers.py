@@ -69,8 +69,16 @@ def panda_auth_reset_driver():
     panda_auth_update(None, True)
 
 
-def panda_auth_refresh_driver(days, verbose):
-    """Refresh auth token."""
+def panda_auth_refresh_driver(days: int, verbose: bool) -> None:
+    """Refresh auth token.
+
+    Parameters
+    ----------
+    days : `int`
+        Number of days before token expires.
+    verbose : `bool`
+        Enable verbose logging.
+    """
     try:
         panda_auth_refresh(days, verbose)
     except TokenNotFoundError as e:
