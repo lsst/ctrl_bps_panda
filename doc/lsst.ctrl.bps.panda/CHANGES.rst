@@ -1,3 +1,17 @@
+lsst-ctrl-bps-panda v30.0.1 (2026-02-03)
+========================================
+
+Dropped support for Python 3.11.
+Now tested with Python 3.14.
+
+Other Changes and Additions
+---------------------------
+
+- - Removed unused ``isort`` and ``black`` sections from ``pyproject.toml``.
+  - Bumped minimum Python version to 3.12.
+  - Switched docs action to use ``sphinxutils``. (`DM-54031 <https://rubinobs.atlassian.net/browse/DM-54031>`_)
+
+
 lsst-ctrl-bps-panda v30.0.0 (2026-01-16)
 ========================================
 
