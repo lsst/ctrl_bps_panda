@@ -1,0 +1,1 @@
+Removed unused ``isort`` and ``black`` sections from ``pyproject.toml``.
