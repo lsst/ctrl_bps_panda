@@ -13,6 +13,7 @@ import logging
 import os
 import sys
 
+from lsst.ctrl.bps import BpsSubprocessError
 from lsst.ctrl.bps.constants import DEFAULT_MEM_FMT, DEFAULT_MEM_UNIT
 from lsst.ctrl.bps.drivers import prepare_driver
 from lsst.ctrl.bps.panda.constants import PANDA_DEFAULT_MAX_COPY_WORKERS, PANDA_DEFAULT_MAX_REQUEST_LENGTH
@@ -79,7 +80,7 @@ if signature is None:
     print("IDDS_BUIL_SIGNATURE is not defined")
     sys.exit(-1)
 
-print(f"INFO: start {datetime.datetime.utcnow()}")
+print(f"INFO: start {datetime.datetime.now(datetime.UTC)}")
 print(f"INFO: config file: {config_file}")
 print(f"INFO: compute site: {compute_site}")
 
@@ -87,7 +88,15 @@ current_dir = os.getcwd()
 
 print(f"INFO: current dir: {current_dir}")
 
-config, bps_workflow = create_idds_workflow(config_file, compute_site)
+try:
+    config, bps_workflow = create_idds_workflow(config_file, compute_site)
+except BpsSubprocessError as e:
+    code = e.errno
+    if code < 0:
+        print(f"BPS prepare caught exception: {e.strerror}")
+        sys.exit(128 + abs(code))
+    elif code != 0:
+        sys.exit(code)
 idds_workflow = bps_workflow.idds_client_workflow
 
 _, max_copy_workers = config.search("maxCopyWorkers", opt={"default": PANDA_DEFAULT_MAX_COPY_WORKERS})

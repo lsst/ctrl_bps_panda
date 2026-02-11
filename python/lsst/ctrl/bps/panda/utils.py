@@ -1128,8 +1128,13 @@ def create_idds_build_workflow(**kwargs):
     task_site = get_task_parameter(config, remote_build, "computeSite")
     task_queue = get_task_parameter(config, remote_build, "queue")
     task_rss = get_task_parameter(config, remote_build, "requestMemory")
+    task_rss_max = get_task_parameter(config, remote_build, "requestMemoryMax")
+    memory_multiplier = get_task_parameter(config, remote_build, "memoryMultiplier")
+    task_rss_retry_step = task_rss * memory_multiplier if memory_multiplier else 0
+    task_rss_retry_offset = 0 if task_rss_retry_step else task_rss
     nretries = get_task_parameter(config, remote_build, "numberOfRetries")
     processing_type = get_task_parameter(config, remote_build, "processingType")
+    priority = get_task_parameter(config, remote_build, "priority")
     _LOG.info("requestMemory: %s", task_rss)
     _LOG.info("Site: %s", task_site)
     # _LOG.info("executable: %s", executable)
@@ -1155,8 +1160,12 @@ def create_idds_build_workflow(**kwargs):
             "value": "log.tgz",
         },
         task_rss=task_rss if task_rss else PANDA_DEFAULT_RSS,
+        task_rss_max=task_rss_max if task_rss_max else PANDA_DEFAULT_RSS_MAX,
+        task_rss_retry_offset=task_rss_retry_offset,
+        task_rss_retry_step=task_rss_retry_step,
         task_cloud=task_cloud,
         task_site=task_site,
+        task_priority=int(priority) if priority else PANDA_DEFAULT_PRIORITY,
         maxattempt=nretries if nretries > 0 else PANDA_DEFAULT_MAX_ATTEMPTS,
     )
 
