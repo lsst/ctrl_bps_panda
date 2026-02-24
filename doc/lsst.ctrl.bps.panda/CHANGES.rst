@@ -1,3 +1,12 @@
+lsst-ctrl-bps-panda v30.0.4 (2026-02-23)
+========================================
+
+Bug Fixes
+---------
+
+- Support memory boost and prmon for build task (`DM-53876 <https://rubinobs.atlassian.net/browse/DM-53876>`_)
+
+
 lsst-ctrl-bps-panda v30.0.1 (2026-02-03)
 ========================================
 
