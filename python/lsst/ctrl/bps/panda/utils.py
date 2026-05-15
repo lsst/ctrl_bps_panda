@@ -39,7 +39,6 @@ __all__ = [
 ]
 
 import binascii
-import concurrent.futures
 import json
 import logging
 import os
@@ -183,12 +182,17 @@ def copy_files_for_distribution(files_to_stage, file_distribution_uri, max_copy_
         Path on the edge node accessed storage,
         including access protocol, bucket name to place files.
     max_copy_workers : `int`
-        Maximum number of workers for copying files.
+        Maximum number of workers for copying files. Present for API
+        compatibility; worker selection is handled internally by
+        `ResourcePath.mtransfer`.
 
     Raises
     ------
+    ExceptionGroup
+        Raised by `ResourcePath.mtransfer` when one or more transfers fail.
     RuntimeError
-        Raised when error copying files to the distribution point.
+        Raised if a copied file is not found at the distribution point after
+        transfer completes.
     """
     files_to_copy = {}
 
@@ -205,18 +209,13 @@ def copy_files_for_distribution(files_to_stage, file_distribution_uri, max_copy_
             folder_uri = file_distribution_uri.join(folder_name, forceDirectory=False)
             files_to_copy[ResourcePath(local_pfn, forceDirectory=False)] = folder_uri
 
-    copy_executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_copy_workers)
-    future_file_copy = []
     for src, trgt in files_to_copy.items():
-        _LOG.debug("Staging %s to %s", src, trgt)
-        # S3 clients explicitly instantiate here to overpass this
-        # https://stackoverflow.com/questions/52820971/is-boto3-client-thread-safe
-        trgt.exists()
-        future_file_copy.append(copy_executor.submit(trgt.transfer_from, src, transfer="copy"))
+        _LOG.info("Staging %s to %s", src, trgt)
+    results = ResourcePath.mtransfer("copy", files_to_copy.items())
 
-    for future in concurrent.futures.as_completed(future_file_copy):
-        if future.result() is not None:
-            raise RuntimeError("Error of placing files to the distribution point")
+    for trgt in results:
+        if not trgt.exists():
+            raise RuntimeError(f"File was not copied to the distribution point: {trgt}")
 
 
 def get_idds_client(config):

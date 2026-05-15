@@ -27,10 +27,13 @@
 
 """Unit tests for ctrl_bps_panda utilities."""
 
+import os
+import tempfile
 import unittest
 
 from lsst.ctrl.bps import GenericWorkflowExec, GenericWorkflowJob
-from lsst.ctrl.bps.panda.utils import _make_pseudo_filename
+from lsst.ctrl.bps.panda.utils import _make_pseudo_filename, copy_files_for_distribution
+from lsst.resources import ResourcePath
 
 
 class TestPandaUtils(unittest.TestCase):
@@ -45,6 +48,38 @@ class TestPandaUtils(unittest.TestCase):
         gwjob.arguments = ""
         name = _make_pseudo_filename({}, gwjob)
         self.assertIn("j" * 15, name)
+
+    def testCopyFilesForDistribution(self):
+        with tempfile.TemporaryDirectory() as src_tmpdir, tempfile.TemporaryDirectory() as dest_tmpdir:
+            single_file = os.path.join(src_tmpdir, "payload.txt")
+            with open(single_file, "w") as handle:
+                handle.write("payload")
+
+            directory = os.path.join(src_tmpdir, "inputs")
+            os.mkdir(directory)
+            nested_file = os.path.join(directory, "nested.txt")
+            with open(nested_file, "w") as handle:
+                handle.write("nested")
+
+            copy_files_for_distribution(
+                {"single": single_file, "directory": directory},
+                ResourcePath(dest_tmpdir, forceDirectory=True),
+                max_copy_workers=2,
+            )
+
+            self.assertTrue(os.path.exists(os.path.join(dest_tmpdir, "payload.txt")))
+            self.assertTrue(os.path.exists(os.path.join(dest_tmpdir, "inputs", "nested.txt")))
+
+    def testCopyFilesForDistributionRaisesExceptionGroup(self):
+        with tempfile.TemporaryDirectory() as src_tmpdir, tempfile.TemporaryDirectory() as dest_tmpdir:
+            missing_file = os.path.join(src_tmpdir, "missing.txt")
+
+            with self.assertRaises(ExceptionGroup):
+                copy_files_for_distribution(
+                    {"missing": missing_file},
+                    ResourcePath(dest_tmpdir, forceDirectory=True),
+                    max_copy_workers=2,
+                )
 
 
 if __name__ == "__main__":
