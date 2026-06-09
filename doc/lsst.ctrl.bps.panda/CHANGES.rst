@@ -1,3 +1,12 @@
+lsst-ctrl-bps-panda v30.0.8 (2026-06-08)
+========================================
+
+Other Changes and Additions
+---------------------------
+
+- Rewrote ``copy_files_for_distribution`` to use the ``ResourcePath.transfer_from`` API in order to simplify tracking of errors during bulk copy. (`DM-54502 <https://rubinobs.atlassian.net/browse/DM-54502>`_)
+
+
 lsst-ctrl-bps-panda v30.0.4 (2026-02-23)
 ========================================
 
