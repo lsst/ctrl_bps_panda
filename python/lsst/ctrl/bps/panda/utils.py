@@ -1015,13 +1015,11 @@ def create_archive_file(submit_path, archive_filename, files):
 def copy_files_to_pandacache(filename):
     from pandaclient import Client
 
-    attempt = 0
     max_attempts = 3
-    done = False
-    while attempt < max_attempts and not done:
+    for _ in range(max_attempts):
         status, out = Client.putFile(filename, True)
         if status == 0:
-            done = True
+            break
     print(f"copy_files_to_pandacache: status: {status}, out: {out}")
     if out.startswith("NewFileName:"):
         # found the same input sandbox to reuse
@@ -1063,19 +1061,17 @@ def download_extract_archive(filename, prefix=None):
     # Otherwise, the PanDA client the environment setting will not be parsed.
     from pandaclient import Client
 
-    attempt = 0
     max_attempts = 3
-    while attempt < max_attempts:
+    for attempt in range(max_attempts):
         status, output = Client.getFile(archive_basename, output_path=full_output_filename)
         if status == 0:
             break
-        if attempt <= 1:
-            secs = random.randint(1, 10)
-        elif attempt <= 2:
-            secs = random.randint(1, 60)
-        else:
-            secs = random.randint(1, 120)
-        time.sleep(secs)
+        if attempt < max_attempts - 1:
+            if attempt < 2:
+                secs = random.randint(1, 10)
+            else:
+                secs = random.randint(1, 60)
+            time.sleep(secs)
     print(f"Download archive file from pandacache status: {status}, output: {output}")
     if status != 0:
         raise RuntimeError("Failed to download archive file from pandacache")
