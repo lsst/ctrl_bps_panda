@@ -1,3 +1,12 @@
+lsst-ctrl-bps-panda v30.0.11 (2026-08-12)
+=========================================
+
+Bug Fixes
+---------
+
+* Fixed ``max_attempts`` not working in upload and download of files from the PanDA cache.
+
+
 lsst-ctrl-bps-panda v30.0.8 (2026-06-08)
 ========================================
 
