@@ -1,24 +1,25 @@
-# This yaml evolves with the progress of the PanDA deployment
+# BPS PanDA configuration for UKDF
 
 includeConfigs:
-- ${CTRL_BPS_PANDA_DIR}/config/bps_panda.yaml
+- resource://lsst.ctrl.bps.panda/config/bps_panda.yaml
 
 project: dev
 campaign: quick
-computeCloud: US
-computeSite: SLAC
+computeCloud: EU
+computeSite: LANCS
 s3EndpointUrl: "https://storage.googleapis.com"
 payloadFolder: payload
 fileDistributionEndPoint: "${LSST_RUN_TEMP_SPACE}/panda_cache_box/{payloadFolder}/{uniqProcName}/"
-fileDistributionEndPointDefault: "/sdf/data/rubin/panda_jobs/panda_cache/panda_cache_box/{payloadFolder}/{uniqProcName}/"
+fileDistributionEndPointDefault: "/cephfs/pool/rubin/panda_cache_box/{payloadFolder}/{uniqProcName}/"
 
 # location of main butler repo at USDF
 payload:
-  butlerConfig: /sdf/group/rubin/repo/main
+  butlerConfig: panda-test-med-1
 
 # Job environment setup
 custom_lsst_setup: ""
 setupLSSTEnv: >
+  export SHELL=/bin/bash;
   unset PYTHONPATH;
   source /cvmfs/sw.lsst.eu/almalinux-x86_64/lsst_distrib/{LSST_VERSION}/loadLSST.bash;
   setup lsst_distrib;
@@ -33,4 +34,4 @@ jobCleanup: "rm -fr EXEC_REPO-*;"
 
 # Specify memory request, queue for finalJob
 finalJob:
-  queue: "SLAC_Rubin_Merge"
+  queue: "LANCS_Rubin_Merge"

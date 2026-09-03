@@ -28,7 +28,7 @@ remoteBuild:
     export PANDA_BEHIND_REAL_LB=true;
     export IDDS_MAX_NAME_LENGTH={IDDS_MAX_NAME_LENGTH};
     {custom_lsst_setup}
-    python3 ${CTRL_BPS_PANDA_DIR}/python/lsst/ctrl/bps/panda/edgenode/build_cmd_line_decoder.py \
+    python3 -m lsst.ctrl.bps.panda.edgenode.build_cmd_line_decoder \
             _download_cmd_line_ _build_cmd_line_ _compute_site_ & pJob=$!;
     prmon -i 5
     -f ${logDir}/memory_monitor_output.txt

@@ -5,7 +5,7 @@
 LSST_VERSION: w_2022_32
 
 includeConfigs:
-- ${CTRL_BPS_PANDA_DIR}/config/bps_usdf.yaml
+- resource://lsst.ctrl.bps.panda/config/bps_usdf.yaml
 
 pipelineYaml: "${DRP_PIPE_DIR}/pipelines/HSC/DRP-RC2.yaml#isr"
 
