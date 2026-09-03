@@ -54,7 +54,7 @@ where = ["python"]
 zip-safe = true
 
 [tool.setuptools.package-data]
-"lsst.ctrl.bps.panda" = ["conf_example/*.yaml"]
+"lsst.ctrl.bps.panda" = ["conf_example/*.yaml", "config/*.yaml"]
 
 [tool.setuptools.dynamic]
 version = { attr = "lsst_versions.get_lsst_version" }
