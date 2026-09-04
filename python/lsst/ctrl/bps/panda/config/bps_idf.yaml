@@ -1,5 +1,5 @@
 includeConfigs:
-- ${CTRL_BPS_PANDA_DIR}/config/bps_panda.yaml
+- resource://lsst.ctrl.bps.panda/config/bps_panda.yaml
 
 
 project: dev

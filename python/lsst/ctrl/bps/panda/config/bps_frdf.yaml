@@ -1,14 +1,20 @@
-# PanDA site common configuration for all Data Facilities
-# --compute-site is necessary to use this yaml for bps submit
+# BPS PanDA configuration for FrDF
 
 includeConfigs:
-- ${CTRL_BPS_PANDA_DIR}/config/bps_panda.yaml
+- resource://lsst.ctrl.bps.panda/config/bps_panda.yaml
 
 project: dev
 campaign: quick
+computeCloud: EU
+computeSite: CC-IN2P3
 s3EndpointUrl: "https://storage.googleapis.com"
 payloadFolder: payload
 fileDistributionEndPoint: "${LSST_RUN_TEMP_SPACE}/panda_cache_box/{payloadFolder}/{uniqProcName}/"
+fileDistributionEndPointDefault: "/sps/lsst/users/lsstgrid/panda_cache_box/{payloadFolder}/{uniqProcName}/"
+
+# location of main butler repo at USDF
+payload:
+  butlerConfig: panda-test-med-1
 
 # Job environment setup
 custom_lsst_setup: ""
@@ -27,4 +33,4 @@ jobCleanup: "rm -fr EXEC_REPO-*;"
 
 # Specify memory request, queue for finalJob
 finalJob:
-  queue: "Rubin_Merge"
+  queue: "CC-IN2P3_Rubin_Merge"

@@ -1,7 +1,7 @@
 # An example bps submission yaml
 
 includeConfigs:
-- ${CTRL_BPS_PANDA_DIR}/config/bps_idf_new.yaml
+- resource://lsst.ctrl.bps.panda/config/bps_idf_new.yaml
 
 pipelineYaml: "${OBS_LSST_DIR}/pipelines/imsim/DRP.yaml#step1"
 
