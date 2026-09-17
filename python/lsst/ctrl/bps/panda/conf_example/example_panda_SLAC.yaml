@@ -68,7 +68,7 @@ payload:
     ls -a;
     setup lsst_distrib;
     env;
-    python3 ${CTRL_BPS_DIR}/python/lsst/ctrl/bps/panda/edgenode/cmd_line_decoder.py _cmd_line_
+    python3 -m lsst.ctrl.bps.panda.edgenode.cmd_line_decoder _cmd_line_
 
 pipetask:
   pipetaskInit:

@@ -1,7 +1,7 @@
 # BPS PanDA configuration for FrDF
 
 includeConfigs:
-- ${CTRL_BPS_PANDA_DIR}/config/bps_panda.yaml
+- resource://lsst.ctrl.bps.panda/resources/config/bps_panda.yaml
 
 project: dev
 campaign: quick
