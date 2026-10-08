@@ -30,14 +30,80 @@
 import os
 import tempfile
 import unittest
+from unittest.mock import patch
 
-from lsst.ctrl.bps import GenericWorkflowExec, GenericWorkflowJob
-from lsst.ctrl.bps.panda.utils import _make_pseudo_filename, copy_files_for_distribution
+from lsst.ctrl.bps import BpsConfig, GenericWorkflowExec, GenericWorkflowJob
+from lsst.ctrl.bps.panda.utils import (
+    _make_pseudo_filename,
+    _resolve_distribution_endpoint,
+    copy_files_for_distribution,
+)
 from lsst.resources import ResourcePath
 
 
 class TestPandaUtils(unittest.TestCase):
     """Simple test of utilities."""
+
+    def testResolveDistributionEndpoint(self):
+        cases = [
+            ({"LSST_SHARED_SCRATCH_DIR": "/new"}, "/new/payload"),
+            ({"LSST_RUN_TEMP_SPACE": "/old"}, "/old/payload"),
+            ({"LSST_SHARED_SCRATCH_DIR": "/new", "LSST_RUN_TEMP_SPACE": "/old"}, "/new/payload"),
+            ({"LSST_SHARED_SCRATCH_DIR": "", "LSST_RUN_TEMP_SPACE": "/old"}, "/payload"),
+        ]
+        for env, expected in cases:
+            for name in ("LSST_SHARED_SCRATCH_DIR", "LSST_RUN_TEMP_SPACE"):
+                for placeholder in ("${" + name + "}", "$" + name):
+                    with self.subTest(env=env, placeholder=placeholder):
+                        with patch.dict(os.environ, env, clear=True):
+                            self.assertEqual(
+                                _resolve_distribution_endpoint(placeholder + "/payload"),
+                                expected,
+                            )
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(_resolve_distribution_endpoint("/custom"), "/custom")
+            self.assertIsNone(_resolve_distribution_endpoint(None))
+            for name in ("LSST_SHARED_SCRATCH_DIR", "LSST_RUN_TEMP_SPACE"):
+                for placeholder in ("${" + name + "}", "$" + name):
+                    with self.subTest(placeholder=placeholder):
+                        with self.assertRaisesRegex(ValueError, "neither .* is set"):
+                            _resolve_distribution_endpoint(placeholder + "/payload")
+
+    def testEndpointConfigSubstitution(self):
+        config = BpsConfig(
+            {
+                "fileDistributionEndPoint": "${LSST_SHARED_SCRATCH_DIR}/{payloadFolder}/{uniqProcName}/",
+                "payloadFolder": "payload",
+                "uniqProcName": "test_run",
+            }
+        )
+        with patch.dict(os.environ, {"LSST_RUN_TEMP_SPACE": "/legacy"}, clear=True):
+            _, endpoint = config.search("fileDistributionEndPoint", opt={"expandEnvVars": False})
+            self.assertEqual(endpoint, "${LSST_SHARED_SCRATCH_DIR}/payload/test_run/")
+            self.assertEqual(_resolve_distribution_endpoint(endpoint), "/legacy/payload/test_run/")
+
+    def testFixedEndpointWithoutScratchEnvironment(self):
+        config = BpsConfig(
+            {
+                "fileDistributionEndPoint": "/sdf/cache/{payloadFolder}/{uniqProcName}/",
+                "payloadFolder": "payload",
+                "uniqProcName": "test_run",
+            }
+        )
+        with patch.dict(os.environ, {}, clear=True):
+            _, endpoint = config.search("fileDistributionEndPoint", opt={"expandEnvVars": False})
+            self.assertEqual(_resolve_distribution_endpoint(endpoint), "/sdf/cache/payload/test_run/")
+
+    def testEndpointOtherEnvironmentVariables(self):
+        with patch.dict(os.environ, {"OTHER_ROOT": "/other", "LSST_RUN_TEMP_SPACE": "/old"}, clear=True):
+            self.assertEqual(_resolve_distribution_endpoint("${OTHER_ROOT}/payload"), "/other/payload")
+            self.assertEqual(
+                _resolve_distribution_endpoint("${LSST_SHARED_SCRATCH_DIR}/${OTHER_ROOT}"), "/old//other"
+            )
+            for name in ("LSST_SHARED_SCRATCH_DIR_EXTRA", "LSST_RUN_TEMP_SPACE_EXTRA"):
+                with self.subTest(name=name):
+                    endpoint = "$" + name + "/payload"
+                    self.assertEqual(_resolve_distribution_endpoint(endpoint), endpoint)
 
     def testOKPseudoFilename(self):
         # define enough of a job for this test
