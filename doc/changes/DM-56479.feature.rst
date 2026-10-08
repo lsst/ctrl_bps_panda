@@ -1,0 +1,1 @@
+Migrate environment variable LSST_RUN_TEMP_SPACE to LSST_SHARED_SCRATCH_DIR

@@ -420,7 +420,7 @@ def _make_doma_work(
     _, vo = config.search("vo", opt={"curvals": cvals, "default": PANDA_DEFAULT_VO})
 
     _, file_distribution_end_point = config.search(
-        "fileDistributionEndPoint", opt={"curvals": cvals, "default": None}
+        "fileDistributionEndPoint", opt={"curvals": cvals, "default": None, "expandEnvVars": False}
     )
 
     _, file_distribution_end_point_default = config.search(
@@ -517,9 +517,9 @@ def _make_doma_work(
         else:
             direct_io_files.add("cmdlineplaceholder")
 
-    lsst_temp = "LSST_RUN_TEMP_SPACE"
-    if lsst_temp in file_distribution_end_point and lsst_temp not in os.environ:
-        file_distribution_end_point = file_distribution_end_point_default
+    file_distribution_end_point = _resolve_distribution_endpoint(
+        file_distribution_end_point, file_distribution_end_point_default
+    )
     if submit_cmd and not file_distribution_end_point:
         file_distribution_end_point = "FileDistribution"
 
@@ -710,6 +710,28 @@ def add_decoder_prefix(config, cmd_line, distribution_path, files):
         + "+".join(files[1]),
     )
     return decoder_prefix
+
+
+def _resolve_distribution_endpoint(endpoint, default):
+    """Resolve scratch placeholders, preferring the new site variable.
+
+    Use the legacy variable when the new variable is unset, and the default
+    endpoint when neither is available. Leave unrelated paths unchanged.
+    """
+    if endpoint is None:
+        return endpoint
+    pattern = (
+        r"\$\{(?:LSST_SHARED_SCRATCH_DIR|LSST_RUN_TEMP_SPACE)\}|"
+        r"\$(?:LSST_SHARED_SCRATCH_DIR|LSST_RUN_TEMP_SPACE)\b"
+    )
+    if not re.search(pattern, endpoint):
+        return os.path.expandvars(endpoint)
+    scratch_dir = os.environ.get("LSST_SHARED_SCRATCH_DIR")
+    if scratch_dir is None:
+        scratch_dir = os.environ.get("LSST_RUN_TEMP_SPACE")
+    if scratch_dir is None:
+        return default
+    return os.path.expandvars(re.sub(pattern, lambda match: scratch_dir, endpoint))
 
 
 def add_idds_work(config, generic_workflow, idds_workflow):

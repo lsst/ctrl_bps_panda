@@ -50,6 +50,7 @@ from lsst.ctrl.bps.panda.constants import (
     PANDA_DEFAULT_MAX_REQUEST_LENGTH,
 )
 from lsst.ctrl.bps.panda.utils import (
+    _resolve_distribution_endpoint,
     add_final_idds_work,
     add_idds_work,
     aggregate_by_basename,
@@ -120,10 +121,12 @@ class PanDAService(BaseWmsService):
             _, max_copy_workers = self.config.search(
                 "maxCopyWorkers", opt={"default": PANDA_DEFAULT_MAX_COPY_WORKERS}
             )
-            file_distribution_uri = self.config["fileDistributionEndPoint"]
-            lsst_temp = "LSST_RUN_TEMP_SPACE"
-            if lsst_temp in file_distribution_uri and lsst_temp not in os.environ:
-                file_distribution_uri = self.config["fileDistributionEndPointDefault"]
+            _, file_distribution_uri = self.config.search(
+                "fileDistributionEndPoint", opt={"expandEnvVars": False}
+            )
+            file_distribution_uri = _resolve_distribution_endpoint(
+                file_distribution_uri, self.config["fileDistributionEndPointDefault"]
+            )
             protocol_pattern = re.compile(r"^[a-zA-Z][a-zA-Z\d+\-.]*://")
             if not protocol_pattern.match(file_distribution_uri):
                 file_distribution_uri = "file://" + file_distribution_uri

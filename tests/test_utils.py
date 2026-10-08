@@ -30,14 +30,40 @@
 import os
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from lsst.ctrl.bps import GenericWorkflowExec, GenericWorkflowJob
-from lsst.ctrl.bps.panda.utils import _make_pseudo_filename, copy_files_for_distribution
+from lsst.ctrl.bps.panda.utils import (
+    _make_pseudo_filename,
+    _resolve_distribution_endpoint,
+    copy_files_for_distribution,
+)
 from lsst.resources import ResourcePath
 
 
 class TestPandaUtils(unittest.TestCase):
     """Simple test of utilities."""
+
+    def testResolveDistributionEndpoint(self):
+        cases = [
+            ({"LSST_SHARED_SCRATCH_DIR": "/new"}, "/new/payload"),
+            ({"LSST_RUN_TEMP_SPACE": "/old"}, "/old/payload"),
+            ({"LSST_SHARED_SCRATCH_DIR": "/new", "LSST_RUN_TEMP_SPACE": "/old"}, "/new/payload"),
+            ({}, "/default"),
+            ({"LSST_SHARED_SCRATCH_DIR": "", "LSST_RUN_TEMP_SPACE": "/old"}, "/payload"),
+        ]
+        for env, expected in cases:
+            for name in ("LSST_SHARED_SCRATCH_DIR", "LSST_RUN_TEMP_SPACE"):
+                for placeholder in ("${" + name + "}", "$" + name):
+                    with self.subTest(env=env, placeholder=placeholder):
+                        with patch.dict(os.environ, env, clear=True):
+                            self.assertEqual(
+                                _resolve_distribution_endpoint(placeholder + "/payload", "/default"),
+                                expected,
+                            )
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(_resolve_distribution_endpoint("/custom", "/default"), "/custom")
+            self.assertIsNone(_resolve_distribution_endpoint(None, "/default"))
 
     def testOKPseudoFilename(self):
         # define enough of a job for this test

@@ -18,6 +18,7 @@ from lsst.ctrl.bps.constants import DEFAULT_MEM_FMT, DEFAULT_MEM_UNIT
 from lsst.ctrl.bps.drivers import prepare_driver
 from lsst.ctrl.bps.panda.constants import PANDA_DEFAULT_MAX_COPY_WORKERS, PANDA_DEFAULT_MAX_REQUEST_LENGTH
 from lsst.ctrl.bps.panda.utils import (
+    _resolve_distribution_endpoint,
     copy_files_for_distribution,
     download_extract_archive,
     get_idds_client,
@@ -100,7 +101,11 @@ except BpsSubprocessError as e:
 idds_workflow = bps_workflow.idds_client_workflow
 
 _, max_copy_workers = config.search("maxCopyWorkers", opt={"default": PANDA_DEFAULT_MAX_COPY_WORKERS})
-file_distribution_uri = ResourcePath(config["fileDistributionEndPoint"], forceDirectory=True)
+_, file_distribution_endpoint = config.search("fileDistributionEndPoint", opt={"expandEnvVars": False})
+file_distribution_endpoint = _resolve_distribution_endpoint(
+    file_distribution_endpoint, config["fileDistributionEndPointDefault"]
+)
+file_distribution_uri = ResourcePath(file_distribution_endpoint, forceDirectory=True)
 copy_files_for_distribution(bps_workflow.files_to_pre_stage, file_distribution_uri, max_copy_workers)
 
 idds_client = get_idds_client(config)
