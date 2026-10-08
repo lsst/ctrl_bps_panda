@@ -30,14 +30,78 @@
 import os
 import tempfile
 import unittest
+from unittest.mock import patch
 
-from lsst.ctrl.bps import GenericWorkflowExec, GenericWorkflowJob
-from lsst.ctrl.bps.panda.utils import _make_pseudo_filename, copy_files_for_distribution
+from lsst.ctrl.bps import BpsConfig, GenericWorkflowExec, GenericWorkflowJob
+from lsst.ctrl.bps.panda.utils import (
+    _make_pseudo_filename,
+    _resolve_distribution_endpoint,
+    copy_files_for_distribution,
+)
 from lsst.resources import ResourcePath
 
 
 class TestPandaUtils(unittest.TestCase):
     """Simple test of utilities."""
+
+    def testResolveDistributionEndpoint(self):
+        cases = [
+            ({"LSST_SHARED_SCRATCH_DIR": "/scratch"}, "/scratch/payload"),
+            ({"LSST_SHARED_SCRATCH_DIR": ""}, "/payload"),
+        ]
+        for env, expected in cases:
+            for placeholder in ("${LSST_SHARED_SCRATCH_DIR}", "$LSST_SHARED_SCRATCH_DIR"):
+                with self.subTest(env=env, placeholder=placeholder):
+                    with patch.dict(os.environ, env, clear=True):
+                        self.assertEqual(
+                            _resolve_distribution_endpoint(placeholder + "/payload"),
+                            expected,
+                        )
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(_resolve_distribution_endpoint("/custom"), "/custom")
+            self.assertIsNone(_resolve_distribution_endpoint(None))
+        for env in ({}, {"LSST_RUN_TEMP_SPACE": "/old"}):
+            for placeholder in ("${LSST_SHARED_SCRATCH_DIR}", "$LSST_SHARED_SCRATCH_DIR"):
+                with self.subTest(env=env, placeholder=placeholder):
+                    with patch.dict(os.environ, env, clear=True):
+                        with self.assertRaisesRegex(ValueError, "LSST_SHARED_SCRATCH_DIR is not set"):
+                            _resolve_distribution_endpoint(placeholder + "/payload")
+
+    def testEndpointConfigSubstitution(self):
+        config = BpsConfig(
+            {
+                "fileDistributionEndPoint": "${LSST_SHARED_SCRATCH_DIR}/{payloadFolder}/{uniqProcName}/",
+                "payloadFolder": "payload",
+                "uniqProcName": "test_run",
+            }
+        )
+        with patch.dict(os.environ, {"LSST_SHARED_SCRATCH_DIR": "/scratch"}, clear=True):
+            _, endpoint = config.search("fileDistributionEndPoint", opt={"expandEnvVars": False})
+            self.assertEqual(endpoint, "${LSST_SHARED_SCRATCH_DIR}/payload/test_run/")
+            self.assertEqual(_resolve_distribution_endpoint(endpoint), "/scratch/payload/test_run/")
+
+    def testFixedEndpointWithoutScratchEnvironment(self):
+        config = BpsConfig(
+            {
+                "fileDistributionEndPoint": "/sdf/cache/{payloadFolder}/{uniqProcName}/",
+                "payloadFolder": "payload",
+                "uniqProcName": "test_run",
+            }
+        )
+        with patch.dict(os.environ, {}, clear=True):
+            _, endpoint = config.search("fileDistributionEndPoint", opt={"expandEnvVars": False})
+            self.assertEqual(_resolve_distribution_endpoint(endpoint), "/sdf/cache/payload/test_run/")
+
+    def testEndpointOtherEnvironmentVariables(self):
+        with patch.dict(
+            os.environ, {"OTHER_ROOT": "/other", "LSST_SHARED_SCRATCH_DIR": "/scratch"}, clear=True
+        ):
+            self.assertEqual(_resolve_distribution_endpoint("${OTHER_ROOT}/payload"), "/other/payload")
+            self.assertEqual(
+                _resolve_distribution_endpoint("${LSST_SHARED_SCRATCH_DIR}/${OTHER_ROOT}"), "/scratch//other"
+            )
+            endpoint = "$LSST_SHARED_SCRATCH_DIR_EXTRA/payload"
+            self.assertEqual(_resolve_distribution_endpoint(endpoint), endpoint)
 
     def testOKPseudoFilename(self):
         # define enough of a job for this test
