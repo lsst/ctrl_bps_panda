@@ -89,9 +89,21 @@ def replace_environment_vars(cmd_line):
     cmdline: `str`
         Processed command line.
     """
-    environment_vars = os.environ
+    environment_vars = _get_environment_vars()
     cmd_line = replace_placeholders(cmd_line, "ENV", environment_vars)
     return cmd_line
+
+
+def _get_environment_vars():
+    """Return the worker environment with both scratch aliases resolved."""
+    environment_vars = dict(os.environ)
+    scratch_dir = environment_vars.get("LSST_SHARED_SCRATCH_DIR")
+    if scratch_dir is None:
+        scratch_dir = environment_vars.get("LSST_RUN_TEMP_SPACE")
+    if scratch_dir is not None:
+        environment_vars["LSST_SHARED_SCRATCH_DIR"] = scratch_dir
+        environment_vars["LSST_RUN_TEMP_SPACE"] = scratch_dir
+    return environment_vars
 
 
 def replace_files_placeholders(cmd_line, files):
@@ -381,6 +393,9 @@ if __name__ == "__main__":
     print("executable command line:")
     print(cmd_line)
 
+    # Final-job scripts expand shell variables themselves, so they need the
+    # same scratch aliases as the decoded command line.
+    os.environ.update(_get_environment_vars())
     exit_status = os.system(cmd_line)
     exit_code = 1
     if os.WIFSIGNALED(exit_status):
