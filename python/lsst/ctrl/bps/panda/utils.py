@@ -420,11 +420,7 @@ def _make_doma_work(
     _, vo = config.search("vo", opt={"curvals": cvals, "default": PANDA_DEFAULT_VO})
 
     _, file_distribution_end_point = config.search(
-        "fileDistributionEndPoint", opt={"curvals": cvals, "default": None}
-    )
-
-    _, file_distribution_end_point_default = config.search(
-        "fileDistributionEndPointDefault", opt={"curvals": cvals, "default": None}
+        "fileDistributionEndPoint", opt={"curvals": cvals, "default": None, "expandEnvVars": False}
     )
 
     task_rss = gwjob.request_memory if gwjob.request_memory else PANDA_DEFAULT_RSS
@@ -517,11 +513,11 @@ def _make_doma_work(
         else:
             direct_io_files.add("cmdlineplaceholder")
 
-    lsst_temp = "LSST_RUN_TEMP_SPACE"
-    if lsst_temp in file_distribution_end_point and lsst_temp not in os.environ:
-        file_distribution_end_point = file_distribution_end_point_default
-    if submit_cmd and not file_distribution_end_point:
+    if submit_cmd:
+        # Custom jobs download their inputs from a PanDA cache archive.
         file_distribution_end_point = "FileDistribution"
+    else:
+        file_distribution_end_point = _resolve_distribution_endpoint(file_distribution_end_point)
 
     executable = add_decoder_prefix(
         config, cmd_line, file_distribution_end_point, (local_pfns, direct_io_files)
@@ -710,6 +706,23 @@ def add_decoder_prefix(config, cmd_line, distribution_path, files):
         + "+".join(files[1]),
     )
     return decoder_prefix
+
+
+def _resolve_distribution_endpoint(endpoint):
+    """Resolve scratch placeholders using LSST_SHARED_SCRATCH_DIR.
+
+    Raise ValueError if a scratch placeholder is present but the variable
+    is unset.
+    """
+    if endpoint is None:
+        return endpoint
+    pattern = r"\$\{LSST_SHARED_SCRATCH_DIR\}|\$LSST_SHARED_SCRATCH_DIR\b"
+    if re.search(pattern, endpoint) and "LSST_SHARED_SCRATCH_DIR" not in os.environ:
+        raise ValueError(
+            "fileDistributionEndPoint references LSST_SHARED_SCRATCH_DIR, but "
+            "LSST_SHARED_SCRATCH_DIR is not set"
+        )
+    return os.path.expandvars(endpoint)
 
 
 def add_idds_work(config, generic_workflow, idds_workflow):

@@ -27,13 +27,27 @@
 
 """Unit tests for edgenode/cmd_line_decoder.py."""
 
+import os
 import unittest
+from unittest.mock import patch
 
-from lsst.ctrl.bps.panda.edgenode.cmd_line_decoder import use_map_file
+from lsst.ctrl.bps.panda.edgenode.cmd_line_decoder import replace_environment_vars, use_map_file
 
 
 class TestCmdLineDecoder(unittest.TestCase):
     """Test command line decoder functions."""
+
+    def test_scratch_environment(self):
+        with patch.dict(os.environ, {"LSST_SHARED_SCRATCH_DIR": "/scratch"}, clear=True):
+            self.assertEqual(
+                replace_environment_vars("<ENV:LSST_SHARED_SCRATCH_DIR>/payload"), "/scratch/payload"
+            )
+            self.assertNotIn("LSST_RUN_TEMP_SPACE", os.environ)
+
+    def test_no_legacy_scratch_fallback(self):
+        with patch.dict(os.environ, {"LSST_RUN_TEMP_SPACE": "/old"}, clear=True):
+            with self.assertRaisesRegex(ValueError, "LSST_SHARED_SCRATCH_DIR is not found"):
+                replace_environment_vars("<ENV:LSST_SHARED_SCRATCH_DIR>/payload")
 
     def test_valid_input(self):
         self.assertTrue(use_map_file("PH:file12345"))
